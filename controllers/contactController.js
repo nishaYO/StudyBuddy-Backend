@@ -1,5 +1,11 @@
 const { body, validationResult } = require('express-validator');
 const Contact = require('../models/Contact');
+const { MongoClient } = require('mongodb');
+
+require('dotenv').config();// Load environment variables from .env file
+
+const uri = process.env.MONGO_URI;
+const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
 
 // Validate user input
@@ -18,15 +24,23 @@ const submitContactForm = async (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    // Save to MongoDB
+    // extract user inputs
     const { name, email, message } = req.body;
-    const newContact = new Contact({ name, email, message });
-    await newContact.save();
+    const data = new Contact({ name, email, message });
 
-    // Send email using EmailJS
-    const template_id = process.env.EMAILJS_TEMPLATE_ID_CONTACT_PAGE;
-    const service_id = process.env.EMAILJS_SERVICE_ID;
-    const public_key = process.env.EMAILJS_PUBLIC_KEY;
+    // save in contactForm collection of studybuddy Database in Mongo atlas
+    try {
+      await client.connect();
+      const database = client.db('studybuddy');
+      const collection = database.collection('contactForm');
+  
+      // write to the 'contactForm' collection
+      await collection.insertOne(data);
+  
+      console.log('Data written to studybuddy.contactForm collection successfully.');
+    } finally {
+      await client.close();
+    }
 
     res.status(200).json({ message: 'Contact form submitted successfully!' });
   } catch (error) {
