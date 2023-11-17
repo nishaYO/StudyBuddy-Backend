@@ -6,7 +6,9 @@ exports.processSessionData = async (req, res) => {
     console.log(sessionData);
     // Do operations on sessionData
     // For example: Save to MongoDB, perform calculations, etc.
-
+    // do some operations to take meaningful data insights and deductions and save them to the data base.
+    // the database will then update the reports data for the user.
+    
     // res.status(200).json({ message: 'Session data processed successfully!', processedData: {} });
   } catch (error) {
     console.error('Error processing session data:', error);
