@@ -9,7 +9,7 @@ exports.processSessionData = async (req, res) => {
     // do some operations to take meaningful data insights and deductions and save them to the data base.
     // the database will then update the reports data for the user.
     
-    // res.status(200).json({ message: 'Session data processed successfully!', processedData: {} });
+    res.status(200).json({ message: 'Session data processed successfully!', processedData: {sessionData} });
   } catch (error) {
     console.error('Error processing session data:', error);
     res.status(500).json({ error: 'Internal Server Error' });

@@ -17,6 +17,7 @@ const sessionSchema = new mongoose.Schema({
   sessionStartedTimestamp: { type: Date, required: true },
   sessionIndex: { type: Number, required: true },
   sessionEndedTimestamp: { type: Date, required: true },
+  musicFrequencyArray: { type: [Number], default: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], required: true }
 });
 
 const Session = mongoose.model("Session", sessionSchema);

@@ -16,7 +16,7 @@ app.use(bodyParser.json());
 
 // Routes
 app.use('/contact', contactRoutes);
-// app.use('/session', sessionRoutes);
+app.use('/session', sessionRoutes);
 app.use('/reports', reportsRoutes);
 
 // Start the server
