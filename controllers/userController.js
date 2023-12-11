@@ -6,6 +6,7 @@ const {
   storeTempUserInDB,
 } = require("../utils/createTempUser.js");
 const sendMail = require("../utils/sendMail.js");
+const { checkUser } = require("../utils/checkUser.js");
 
 class UserController {
   static async signup({ name, email, password }) {
@@ -17,7 +18,6 @@ class UserController {
     };
 
     const codeMailed = await sendMail(email, content);
-
     if (codeMailed) {
       const tempUser = { name, email, password, verificationCode };
       const tempUserStored = await storeTempUserInDB(tempUser);
@@ -41,6 +41,22 @@ class UserController {
     const { user, token } = await createUser(foundTempUser);
     //todo: remove the user from the tempUser as it is now added in permanentDB.
     return { verified: true, user, token };
+  }
+
+  static async autoLogin({id, email, token}) {
+    try {
+      // Check if user with provided id, email, and token exists in the permanent DB
+      const existingUser = await checkUser({ _id: id, email, token });
+
+      if (existingUser) {
+        return { loggedIn: true };
+      } else {
+        return { loggedIn: false };
+      }
+    } catch (error) {
+      console.error("Error during autoLogin:", error.message);
+      return { loggedIn: false };
+    }
   }
 }
 

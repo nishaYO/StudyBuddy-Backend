@@ -21,15 +21,26 @@ const userTypes = gql`
     name: String!
     email: String!
   }
-  
+
   type VerifyEmailOutput {
     verified: Boolean!
-    user: User 
-    token: String 
+    user: User
+    token: String
+  }
+
+  type AuthResult {
+    loggedIn: Boolean!
+  }
+
+  input AuthInput {
+    id: ID!
+    email: String!
+    token: String!
   }
 
   type Query {
     user(id: ID!): User
+    autoLogin(input: AuthInput): AuthResult!
   }
 
   type Mutation {
