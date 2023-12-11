@@ -9,6 +9,7 @@ const sendMail = require("../utils/sendMail.js");
 
 class UserController {
   static async signup({ name, email, password }) {
+    //todo: check that such email already exists or not
     const verificationCode = generateVerificationCode();
     const content = {
       subject: "SignUp in StudyBuddy",
@@ -38,6 +39,7 @@ class UserController {
     }
 
     const { user, token } = await createUser(foundTempUser);
+    //todo: remove the user from the tempUser as it is now added in permanentDB.
     return { verified: true, user, token };
   }
 }
