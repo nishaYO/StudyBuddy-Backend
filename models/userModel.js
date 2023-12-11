@@ -5,6 +5,10 @@ const userSchema = new Schema({
   name: String,
   email: String,
   password: String,
+  streakGoal: String,
+  timezone: String,
+  deviceSize: String,
+  userAgent: String,
   token: String,
   date: Date,
 });

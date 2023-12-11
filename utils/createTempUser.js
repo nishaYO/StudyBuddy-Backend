@@ -15,6 +15,10 @@ async function storeTempUserInDB(tempUser) {
       name: tempUser.name,
       email: tempUser.email,
       password: tempUser.password,
+      timezone: tempUser.timezone,
+      streakGoal: tempUser.streakGoal,
+      deviceSize: tempUser.deviceSize,
+      userAgent: tempUser.userAgent,
       verificationCode: tempUser.verificationCode,
     });
 

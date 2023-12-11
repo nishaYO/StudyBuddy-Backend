@@ -5,6 +5,10 @@ const tempUserSchema = new mongoose.Schema({
   name: String,
   email: String,
   password: String,
+  streakGoal: String,
+  timezone: String,
+  deviceSize: String,
+  userAgent: String,
   verificationCode: String,
 });
 

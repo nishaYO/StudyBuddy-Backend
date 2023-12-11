@@ -9,7 +9,7 @@ const sendMail = require("../utils/sendMail.js");
 const { checkUser } = require("../utils/checkUser.js");
 
 class UserController {
-  static async signup({ name, email, password }) {
+  static async signup({ name, email, password, streakGoal, timezone, deviceSize, userAgent }) {
     //todo: check that such email already exists or not
     const verificationCode = generateVerificationCode();
     const content = {
@@ -19,7 +19,7 @@ class UserController {
 
     const codeMailed = await sendMail(email, content);
     if (codeMailed) {
-      const tempUser = { name, email, password, verificationCode };
+      const tempUser = { name, email, password, streakGoal, timezone, deviceSize, userAgent, verificationCode };
       const tempUserStored = await storeTempUserInDB(tempUser);
 
       if (tempUserStored) {

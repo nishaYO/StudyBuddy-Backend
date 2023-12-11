@@ -5,6 +5,10 @@ const userTypes = gql`
     name: String!
     email: String!
     password: String!
+    streakGoal: String!
+    timezone: String!
+    deviceSize: String!
+    userAgent: String!
   }
 
   type SignupOutput {

@@ -4,8 +4,6 @@ const { hash } = require("bcrypt");
 const generateToken = require("./../utils/generateToken.js");
 require("dotenv").config();
 
-
-
 const createUser = async (user) => {
   try {
     await connect(process.env.MONGO_URI, {
@@ -14,16 +12,19 @@ const createUser = async (user) => {
     });
     const token = generateToken(user);
     const hashedPassword = await hash(user.password, 10);
-    
+
     // Create a new instance of the UserModel
     const userModel = new User({
-      _id:  new Types.ObjectId(),
+      _id: new Types.ObjectId(),
       name: user.name,
       email: user.email,
       password: hashedPassword,
+      timezone: user.timezone,
+      streakGoal: user.streakGoal,
+      deviceSize: user.deviceSize,
+      userAgent: user.userAgent,
       token: token,
       date: Date.now(),
-      // other properties
     });
 
     // Save the user to the database
@@ -32,7 +33,7 @@ const createUser = async (user) => {
       console.log("User successfully created and saved to the database.");
     } catch (error) {
       console.error("Error saving user to the database:", error.message);
-      return null; 
+      return null;
     }
 
     console.log("User successfully created and saved to the database.");
@@ -48,7 +49,7 @@ const createUser = async (user) => {
     };
   } catch (error) {
     console.error("Error creating user:", error.message);
-    return null; 
+    return null;
   } finally {
     disconnect();
   }
