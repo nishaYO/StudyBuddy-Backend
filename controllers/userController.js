@@ -80,14 +80,18 @@ class UserController {
 
   static async login({ email, password }) {
     try {
-      // Check if user with provided email and hashed password exists in the permanent DB
-      const existingUser = await checkUserLogin(
-        { email, password },
-      );
+      // Check if user with provided email and password exists in the permanent DB
+      const existingUser = await checkUserLogin({ email, password });
       if (existingUser) {
-        return { loggedIn: true };
+        const user = {
+          id: existingUser._id,
+          name: existingUser.name,
+          email: existingUser.email,
+        };
+        const token = existingUser.token;
+        return { loggedIn: true, user, token };
       } else {
-        return { loggedIn: false };
+        return { loggedIn: false, user: null, token: null };
       }
     } catch (error) {
       console.error("Error during autoLogin:", error.message);

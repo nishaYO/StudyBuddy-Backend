@@ -22,6 +22,8 @@ const userTypes = gql`
 
   type LoginOutput {
     loggedIn: Boolean!
+    user: User
+    token: String
   }
 
   input VerifyEmailInput {
