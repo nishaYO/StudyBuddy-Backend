@@ -15,6 +15,15 @@ const userTypes = gql`
     CodeMailed: Boolean!
   }
 
+  input LoginInput {
+    email: String!
+    password: String!
+  }
+
+  type LoginOutput {
+    loggedIn: Boolean!
+  }
+
   input VerifyEmailInput {
     email: String!
     code: String!
@@ -50,7 +59,10 @@ const userTypes = gql`
   type Mutation {
     signup(input: SignupInput): SignupOutput
     verifyEmail(input: VerifyEmailInput): VerifyEmailOutput
+    login(input: LoginInput): LoginOutput
   }
+
+
 `;
 
 module.exports = userTypes;

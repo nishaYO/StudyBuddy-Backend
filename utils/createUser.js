@@ -5,6 +5,7 @@ const generateToken = require("./../utils/generateToken.js");
 require("dotenv").config();
 
 const createUser = async (user) => {
+  console.log("CreateUser Entered..")
   try {
     await connect(process.env.MONGO_URI, {
       //   useNewUrlParser: true,
