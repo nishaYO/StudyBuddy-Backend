@@ -62,9 +62,13 @@ const userTypes = gql`
     signup(input: SignupInput): SignupOutput
     verifyEmail(input: VerifyEmailInput): VerifyEmailOutput
     login(input: LoginInput): LoginOutput
+    forgotPassword(email: String!): ForgotPassword
   }
 
-
+  type ForgotPassword {
+    email: String!
+    codeSent: Boolean
+  }
 `;
 
 module.exports = userTypes;

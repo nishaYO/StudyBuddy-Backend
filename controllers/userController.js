@@ -6,6 +6,7 @@ const { hash } = bcrypt;
 const {
   getTempUserFromDB,
   storeTempUserInDB,
+  deleteTempUser
 } = require("../utils/createTempUser.js");
 const sendMail = require("../utils/sendMail.js");
 const { checkUser, checkUserLogin } = require("../utils/checkUser.js");
@@ -58,7 +59,7 @@ class UserController {
     }
     const { user, token } = await createUser(foundTempUser);
 
-    //todo: remove the user from the tempUser as it is now added in permanentDB.
+    await deleteTempUser(email);
     return { verified: true, user, token };
   }
 
@@ -96,6 +97,39 @@ class UserController {
     } catch (error) {
       console.error("Error during autoLogin:", error.message);
       return { loggedIn: false };
+    }
+  }
+  
+  static async forgotPassword(email) {
+    try {
+      const verificationCode = generateVerificationCode();
+      const content = {
+        subject: "Forgot Password in StudyBuddy",
+        text: `Your verification code is: ${verificationCode}`,
+      };
+
+      const codeMailed = await sendMail(email, content);
+
+      if (codeMailed) {
+        // Store the user's email and verification code for later verification
+        const tempUser = {
+          email,
+          verificationCode,
+        };
+
+        const tempUserStored = await storeTempUserInDB(tempUser);
+
+        if (tempUserStored) {
+          return { email, codeSent: true };
+        } else {
+          return { email, codeSent: false };
+        }
+      } else {
+        return { email, codeSent: false };
+      }
+    } catch (error) {
+      console.error("Error during forgotPassword:", error.message);
+      return { email, codeSent: false };
     }
   }
 }

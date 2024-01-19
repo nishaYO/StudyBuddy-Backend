@@ -5,21 +5,18 @@ require("dotenv").config();
 
 async function storeTempUserInDB(tempUser) {
   try {
-    await connect(process.env.MONGO_URI, {
-      //   useNewUrlParser: true,
-      //   useUnifiedTopology: true,
-    });
+    await connect(process.env.MONGO_URI, {});
 
     const tempUserModel = new TempUser({
       _id: new Types.ObjectId(),
-      name: tempUser.name,
+      name: tempUser.name || "",
       email: tempUser.email,
-      password: tempUser.password,
-      timezone: tempUser.timezone,
-      streakGoal: tempUser.streakGoal,
-      deviceSize: tempUser.deviceSize,
-      userAgent: tempUser.userAgent,
-      verificationCode: tempUser.verificationCode,
+      password: tempUser.password || "",
+      timezone: tempUser.timezone || "",
+      streakGoal: tempUser.streakGoal || "",
+      deviceSize: tempUser.deviceSize || "",
+      userAgent: tempUser.userAgent || "",
+      verificationCode: tempUser.verificationCode || "",
     });
 
     await tempUserModel.save();
@@ -50,7 +47,23 @@ async function getTempUserFromDB(email) {
   }
 }
 
+async function deleteTempUser(email) {
+  try {
+    await connect(process.env.MONGO_URI, {});
+
+    await TempUser.deleteOne({ email });
+
+    disconnect();
+
+    return true;
+  } catch (error) {
+    console.error("Error deleting temporary user from DB:", error.message);
+    return false;
+  }
+}
+
 module.exports = {
   storeTempUserInDB,
   getTempUserFromDB,
+  deleteTempUser,
 };

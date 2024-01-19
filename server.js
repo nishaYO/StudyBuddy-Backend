@@ -22,10 +22,10 @@ async function startServer() {
 
   // Middleware to log every request data
   app.use((req, res, next) => {
-    // console.log(`Request received at ${new Date().toISOString()}`);
+    console.log(`Request received at ${new Date().toISOString()}`);
     // console.log(`Method: ${req.method}`);
     // console.log(`Path: ${req.path}`);
-    console.log(`Body: ${JSON.stringify(req.body)}`);
+    // console.log(`Body: ${JSON.stringify(req.body)}`);
     next();
   });
 
