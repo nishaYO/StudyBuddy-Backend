@@ -52,6 +52,25 @@ class NotesController {
       };
     }
   }
+  static async getAllNotes(userID) {
+    // Fetch all notes for the specified user ID
+    try {
+      await connect(process.env.MONGO_URI, {});
+      const notes = await Notes.find({ userID });
+      disconnect();
+      return {
+        success: true,
+        notes,
+      };
+    } catch (error) {
+      console.error("Error fetching notes:", error.message);
+      disconnect();
+      return {
+        success: false,
+        message: `Error fetching notes: ${error.message}`,
+      };
+    }
+  }
 }
 
 module.exports = NotesController;

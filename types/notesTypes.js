@@ -23,6 +23,16 @@ const notesTypes = gql`
   type Mutation {
     newNote(input: newNoteInput): newNoteOutput
   }
+
+  type getAllNotesOutput {
+    success: Boolean!
+    message: String
+    notes: [Note]
+  }
+  
+  type Query {
+    getAllNotes(userID: ID!): getAllNotesOutput
+  }
 `;
 
 module.exports = notesTypes;
