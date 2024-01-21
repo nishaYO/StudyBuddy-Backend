@@ -71,6 +71,78 @@ class NotesController {
       };
     }
   }
+
+  static async getNote(noteId) {
+    try {
+      await connect(process.env.MONGO_URI, {});
+      const note = await Notes.findById(noteId);
+
+      if (!note) {
+        disconnect();
+        return {
+          success: false,
+          message: "Note not found",
+        };
+      }
+
+      disconnect();
+      return {
+        success: true,
+        note: {
+          id: note._id,
+          title: note.title,
+          content: note.content,
+          date: note.date.toString(),
+        },
+      };
+    } catch (error) {
+      console.error("Error fetching note:", error.message);
+      disconnect();
+      return {
+        success: false,
+        message: "Error fetching note",
+      };
+    }
+  }
+  static async updateNote(noteId, { title, content }) {
+    try {
+      await connect(process.env.MONGO_URI, {});
+      const note = await Notes.findById(noteId);
+
+      if (!note) {
+        disconnect();
+        return {
+          success: false,
+          message: "Note not found",
+        };
+      }
+
+      // Update note properties
+      note.title = title;
+      note.content = content;
+      note.date = Date.now();
+      // Save the updated note
+      await note.save();
+
+      disconnect();
+      return {
+        success: true,
+        note: {
+          id: note._id,
+          title: note.title,
+          content: note.content,
+          date: note.date.toString(),
+        },
+      };
+    } catch (error) {
+      console.error("Error updating note:", error.message);
+      disconnect();
+      return {
+        success: false,
+        message: "Error updating note",
+      };
+    }
+  }
 }
 
 module.exports = NotesController;

@@ -14,7 +14,18 @@ const notesTypes = gql`
     content: String!
   }
 
+  input updateNoteInput {
+    title: String!
+    content: String!
+  }
+
   type newNoteOutput {
+    success: Boolean!
+    message: String
+    note: Note
+  }
+
+  type updateNoteOutput {
     success: Boolean!
     message: String
     note: Note
@@ -22,6 +33,7 @@ const notesTypes = gql`
 
   type Mutation {
     newNote(input: newNoteInput): newNoteOutput
+    updateNote(noteId: ID!, input: updateNoteInput): updateNoteOutput
   }
 
   type getAllNotesOutput {
@@ -29,9 +41,16 @@ const notesTypes = gql`
     message: String
     notes: [Note]
   }
-  
+
+  type getNoteOutput {
+    success: Boolean!
+    message: String
+    note: Note
+  }
+
   type Query {
     getAllNotes(userID: ID!): getAllNotesOutput
+    getNote(noteId: ID!): getNoteOutput
   }
 `;
 
