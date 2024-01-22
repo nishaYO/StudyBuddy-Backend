@@ -1,6 +1,7 @@
 const Notes = require("../models/Notes.js");
 const { connect, disconnect, Types } = require("mongoose");
 const User = require("../models/userModel.js");
+const DeletedNotes = require("../models/DeletedNotes.js");
 
 class NotesController {
   static async newNote({ userID, title, content }) {
@@ -131,7 +132,7 @@ class NotesController {
           id: note._id,
           title: note.title,
           content: note.content,
-          date: note.date.toString(),
+          date: note.date,
         },
       };
     } catch (error) {
@@ -140,6 +141,43 @@ class NotesController {
       return {
         success: false,
         message: "Error updating note",
+      };
+    }
+  }
+  static async deleteNote(noteId) {
+    try {
+      await connect(process.env.MONGO_URI, {});
+      const deletedNote = await Notes.findByIdAndDelete(noteId);
+
+      if (!deletedNote) {
+        disconnect();
+        return {
+          success: false,
+          message: "Note not found",
+        };
+      }
+
+      // Add the deleted note to the DeletedNotes collection
+      const { _id, userID, title, content, date } = deletedNote;
+      await DeletedNotes.create({
+        _id,
+        userID,
+        title,
+        content,
+        date,
+      });
+
+      disconnect();
+      return {
+        success: true,
+        message: "Note deleted successfully",
+      };
+    } catch (error) {
+      console.error("Error deleting note:", error.message);
+      disconnect();
+      return {
+        success: false,
+        message: "Error deleting note",
       };
     }
   }

@@ -31,9 +31,15 @@ const notesTypes = gql`
     note: Note
   }
 
+  type deleteNoteOutput {
+    success: Boolean!
+    message: String
+  }
+
   type Mutation {
     newNote(input: newNoteInput): newNoteOutput
     updateNote(noteId: ID!, input: updateNoteInput): updateNoteOutput
+    deleteNote(noteId: ID!): deleteNoteOutput
   }
 
   type getAllNotesOutput {
