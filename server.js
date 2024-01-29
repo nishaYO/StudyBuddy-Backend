@@ -8,6 +8,8 @@ const userResolvers = require("./resolvers/userResolvers.js");
 const userTypes = require("./types/userTypes.js");
 const notesResolvers = require("./resolvers/notesResolvers.js");
 const notesTypes = require("./types/notesTypes.js");
+const sessionResolvers = require("./resolvers/sessionResolvers.js");
+const sessionTypes = require("./types/sessionTypes.js");
 
 config();
 
@@ -17,8 +19,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const mergedTypeDefs = mergeTypeDefs([userTypes, notesTypes]);
-const mergedResolvers = mergeResolvers([userResolvers, notesResolvers]);
+const mergedTypeDefs = mergeTypeDefs([userTypes, notesTypes, sessionTypes]);
+const mergedResolvers = mergeResolvers([userResolvers, notesResolvers, sessionResolvers]);
 
 const server = new ApolloServer({
   typeDefs: mergedTypeDefs,
