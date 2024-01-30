@@ -1,4 +1,4 @@
-const TempSessions = require("../models/TempSessions");
+const TempSessions = require("../models/SessionReports/TempSessions");
 const { connect, disconnect, Types } = require("mongoose");
 
 class SessionController {
@@ -16,7 +16,7 @@ class SessionController {
         pauseTimeArray,
         resumeTimeArray,
       } = input;
-
+      
       // Connect to the database
       await connect(process.env.MONGO_URI, {});
 

@@ -1,6 +1,37 @@
 const mongoose = require("mongoose");
 const { Schema, model } = require("mongoose");
 
+const breakSchema = new Schema({
+  breakDuration: {
+    hours: {
+      type: Number,
+      required: true,
+    },
+    minutes: {
+      type: Number,
+      required: true,
+    },
+    seconds: {
+      type: Number,
+      required: true,
+    },
+  },
+  breakStartTime: {
+    hours: {
+      type: Number,
+      required: true,
+    },
+    minutes: {
+      type: Number,
+      required: true,
+    },
+    seconds: {
+      type: Number,
+      required: true,
+    },
+  },
+});
+
 const tempSessionsSchema = new Schema({
   _id: mongoose.Schema.Types.ObjectId,
   userID: {
@@ -12,7 +43,7 @@ const tempSessionsSchema = new Schema({
     required: true,
   },
   sessionIntervals: {
-    type: Array, 
+    type: Array,
     required: true,
   },
   sessionDuration: {
@@ -20,7 +51,7 @@ const tempSessionsSchema = new Schema({
     required: true,
   },
   breaks: {
-    type: Array,
+    type: [breakSchema],
     required: true,
   },
   endTime: {
@@ -28,15 +59,15 @@ const tempSessionsSchema = new Schema({
     required: true,
   },
   intervalSwitchArray: {
-    type: Array,
+    type: [Date],
     required: true,
   },
   pauseTimeArray: {
-    type: Array,
+    type: [Date],
     required: true,
   },
   resumeTimeArray: {
-    type: Array,
+    type: [Date],
     required: true,
   },
   date: {

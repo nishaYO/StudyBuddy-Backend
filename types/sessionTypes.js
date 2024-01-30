@@ -1,20 +1,14 @@
 const { gql } = require("apollo-server-express");
 
 const sessionTypes = gql`
-  input DurationInput {
-    hours: String!
-    minutes: String!
-    seconds: String!
-  }
-
   input TimeInput {
     hours: Int!
     minutes: Int!
-    seconds: String!
+    seconds: Int!
   }
 
   input BreakInput {
-    breakDuration: DurationInput!
+    breakDuration: TimeInput!
     breakStartTime: TimeInput!
   }
 
@@ -25,7 +19,7 @@ const sessionTypes = gql`
     intervalSwitchArray: [String!]!
     pauseTimeArray: [String!]!
     resumeTimeArray: [String!]!
-    sessionDuration: DurationInput!
+    sessionDuration: TimeInput!
     sessionIntervals: [SessionIntervalInput!]!
     startTime: String!
   }
