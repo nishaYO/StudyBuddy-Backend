@@ -1,17 +1,13 @@
 const mongoose = require("mongoose");
 const { Schema, model } = require("mongoose");
 
-const streakCalendarSchema = new Schema({
+const totalMinutessSchema = new Schema({
   _id: mongoose.Schema.Types.ObjectId,
   userID: {
     type: String,
     required: true,
   },
-  streakGoal: {
-    type: [Object],
-    required: true,
-  },
-  months: {
+  totalMinutes: {
     type: [Object],
     required: true,
   },
@@ -20,6 +16,7 @@ const streakCalendarSchema = new Schema({
     default: Date.now,
   },
 });
-const StreakCalendar = model("StreakCalendar", streakCalendarSchema);
 
-module.exports = StreakCalendar;
+const TotalMinutes = model("TotalMinutes", totalMinutessSchema);
+
+module.exports = TotalMinutes;
