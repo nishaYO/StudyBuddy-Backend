@@ -2,7 +2,7 @@ const SessionController = require("../controllers/sessionController.js");
 
 const sessionResolvers = {
   Mutation: {
-    sendSessionData: (_, { input }) => SessionController.sendSessionData(input),
+    getSessionData: (_, { input }) => SessionController.getSessionData(input),
   },
 };
 
