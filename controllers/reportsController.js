@@ -6,12 +6,15 @@ class ReportsController {
     try {
       // Connect to the database
       await connect(process.env.MONGO_URI, {});
+
       // Query streak reports for the given userID
-      const streakReports = await StreakCalendar.find({ userID });
+      let streakReport = await StreakCalendar.findOne({ userID });
+
       // Disconnect from the database
       await disconnect();
-
-      return streakReports;
+      // streakReport = JSON.stringify(streakReport, null, 2)
+      console.log("streakReport", streakReport)
+      return streakReport; // Return single document instead of an array
     } catch (error) {
       console.error("Error fetching streak reports:", error);
       throw error;

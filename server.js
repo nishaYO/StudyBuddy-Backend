@@ -5,11 +5,13 @@ const { config } = require("dotenv");
 const cors = require("cors");
 
 const userResolvers = require("./resolvers/userResolvers.js");
-const userTypes = require("./types/userTypes.js");
 const notesResolvers = require("./resolvers/notesResolvers.js");
-const notesTypes = require("./types/notesTypes.js");
 const sessionResolvers = require("./resolvers/sessionResolvers.js");
+const reportsResolvers = require("./resolvers/reportsResolvers.js");
+const userTypes = require("./types/userTypes.js");
+const notesTypes = require("./types/notesTypes.js");
 const sessionTypes = require("./types/sessionTypes.js");
+const reportsTypes = require("./types/reportsTypes.js");
 
 config();
 
@@ -19,8 +21,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const mergedTypeDefs = mergeTypeDefs([userTypes, notesTypes, sessionTypes]);
-const mergedResolvers = mergeResolvers([userResolvers, notesResolvers, sessionResolvers]);
+const mergedTypeDefs = mergeTypeDefs([userTypes, notesTypes, sessionTypes, reportsTypes]);
+const mergedResolvers = mergeResolvers([userResolvers, notesResolvers, sessionResolvers, reportsResolvers]);
 
 const server = new ApolloServer({
   typeDefs: mergedTypeDefs,
