@@ -1,26 +1,8 @@
 const { gql } = require("apollo-server-express");
+const { GraphQLJSON } = require("graphql-type-json");
 
 const reportsTypes = gql`
-  type StudyTime {
-    hours: Int!
-    minutes: Int!
-  }
-
-  type Day {
-    date: Int!
-    studyTimePercent: Float!
-    studyTime: StudyTime!
-  }
-
-  type Month {
-    name: String!
-    days: [Day!]!
-  }
-
-  type Year {
-    year: Int!
-    months: [Month!]!
-  }
+  scalar JSON
 
   type Goal {
     hours: String!
@@ -32,7 +14,7 @@ const reportsTypes = gql`
     userID: String!
     streakGoal: [Goal!]!
     date: String!
-    years: [Year!]!
+    years: JSON!
   }
 
   type Query {
