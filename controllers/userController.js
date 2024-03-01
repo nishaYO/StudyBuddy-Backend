@@ -1,4 +1,7 @@
 const User = require("../models/userModel.js");
+const TotalMinutes = require("../models/SessionReports/TotalMinutes.js");
+const StreakCalendar = require("../models/SessionReports/StreakCalendar.js");
+const MainStats = require("../models/SessionReports/MainStats.js");
 const generateVerificationCode = require("../utils/generateVerificationCode.js");
 const createUser = require("../utils/createUser.js");
 const bcrypt = require("bcrypt");
@@ -6,10 +9,11 @@ const { hash } = bcrypt;
 const {
   getTempUserFromDB,
   storeTempUserInDB,
-  deleteTempUser
+  deleteTempUser,
 } = require("../utils/createTempUser.js");
 const sendMail = require("../utils/sendMail.js");
 const { checkUser, checkUserLogin } = require("../utils/checkUser.js");
+const { connect, Types, disconnect } = require("mongoose");
 
 class UserController {
   static async signup({
@@ -57,8 +61,8 @@ class UserController {
     if (!foundTempUser || foundTempUser.verificationCode !== code) {
       return { verified: false, user: null, token: null };
     }
-    const { user, token } = await createUser(foundTempUser);
-
+    const { user, token, streakGoal } = await createUser(foundTempUser);
+    this.initializeDBs(user, streakGoal);
     await deleteTempUser(email);
     return { verified: true, user, token };
   }
@@ -99,7 +103,7 @@ class UserController {
       return { loggedIn: false };
     }
   }
-  
+
   static async forgotPassword(email) {
     try {
       const verificationCode = generateVerificationCode();
@@ -130,6 +134,71 @@ class UserController {
     } catch (error) {
       console.error("Error during forgotPassword:", error.message);
       return { email, codeSent: false };
+    }
+  }
+
+  static async initializeDBs(user, streakGoal) {
+    try {
+      await connect(process.env.MONGO_URI, {
+        //   useNewUrlParser: true,
+        //   useUnifiedTopology: true,
+      });
+      
+      const userID = user.id;
+
+      // Get the current date
+      const currentDate = new Date();
+
+      // Create a new TotalMinutes document
+      const totalMinutesDoc = new TotalMinutes({
+        _id: new Types.ObjectId(),
+        userID: userID,
+        totalMinutes: [{ date: currentDate, minutes: 0 }],
+      });
+
+      // Create a new StreakCalendar document
+      const streakCalendarDoc = new StreakCalendar({
+        _id: new Types.ObjectId(),
+        userID: userID,
+        streakGoal: JSON.parse(streakGoal),
+        calendar: [
+          {
+            date: currentDate,
+            studyTimePercent: 0,
+            studyTime: { hours: 0, minutes: 0 },
+          },
+        ],
+      });
+
+      // Create a new MainStats document
+      const mainStatsDoc = new MainStats({
+        _id: new Types.ObjectId(),
+        userID: userID,
+        streakGoal: JSON.parse(streakGoal),
+        latestSession: [
+          {
+            date: currentDate,
+            sessionDuration: { hours: 0, minutes: 0, seconds: 0 },
+          },
+        ],
+        totalStudyDuration: [{ date: currentDate, totalMinutes: 0 }],
+      });
+
+      // Save the new TotalMinutes document
+      await totalMinutesDoc.save();
+
+      // Save the new StreakCalendar document
+      await streakCalendarDoc.save();
+
+      // Save the new MainStats document
+      await mainStatsDoc.save();
+
+      console.log("All databases initialized for user:", userID);
+    } catch (error) {
+      console.error("Error initializing databases:", error);
+      throw error;
+    } finally {
+      disconnect();
     }
   }
 }

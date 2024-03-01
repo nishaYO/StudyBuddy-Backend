@@ -31,13 +31,13 @@ const sessionTypes = gql`
     type: String!
   }
 
-  type GetSessionDataOutput {
+  type SendSessionDataOutput {
     success: Boolean!
     message: String
   }
 
   type Mutation {
-    getSessionData(input: SessionDataInput!): GetSessionDataOutput
+    sendSessionData(input: SessionDataInput!): SendSessionDataOutput
   }
 `;
 

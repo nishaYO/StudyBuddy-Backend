@@ -46,6 +46,7 @@ const createUser = async (user) => {
         name: userModel.name,
         email: userModel.email,
       },
+      streakGoal: userModel.streakGoal,
       token: userModel.token,
     };
   } catch (error) {

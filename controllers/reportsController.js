@@ -10,11 +10,98 @@ class ReportsController {
       // Query streak reports for the given userID
       let streakReport = await StreakCalendar.findOne({ userID });
 
+      if (!streakReport) {
+        // If no streak report found for the user, return null
+        return null;
+      }
+      
+      console.log(streakReport)
+      // Extract years data from the streak report
+      const years = streakReport.years;
+      const yearsData = (Object.entries(years[0])).slice(0, -2);
+      console.log("yearsData: ", yearsData)
+      // Get the last date from the streak report or initialize to null if no streak report exists
+      const lastYearData = yearsData[yearsData.length - 1];
+      // Extract the month data
+      const monthData = Object.values(lastYearData[1])[0];
+      // Access the last element of the month data array
+      const lastDateObject = monthData[monthData.length - 1];
+      // Get the date from the last date object
+      const lastDate = lastDateObject.date;
+
+      // Calculate the current date
+      const currentDate = new Date();
+      const currentDay = currentDate.getDate();
+
+      // If lastDate exists, calculate dates between lastDate and current date
+      let newStreakReports = [];
+      if (lastDate) {
+        if (lastDate != currentDay) {
+          const startDate = new Date();
+          startDate.setDate(lastDate + 1); // Start from the day after lastDate
+
+          // Create streak report objects for each date between lastDate and current date
+          for (let date = startDate.getDate(); date <= currentDay; date++) {
+            newStreakReports.push({
+              date,
+              studyTimePercent: 0,
+              studyTime: { hours: 0, minutes: 0 },
+            });
+          }
+          console.log("newStreakReports", newStreakReports);
+          // Update the streak report object with new streak reports
+          if (
+            streakReport &&
+            streakReport.years &&
+            streakReport.years[0] &&
+            Object.keys(streakReport.years[0]).length > 0
+          ) {
+            const lastYearKey = Object.keys(streakReport.years[0]).pop();
+            const lastMonthKey = Object.keys(
+              streakReport.years[0][lastYearKey]
+            ).pop();
+            if (streakReport.years[0][lastYearKey][lastMonthKey]) {
+              streakReport.years[0][lastYearKey][lastMonthKey].push(
+                ...newStreakReports
+              );
+            }
+          }
+        }
+      } else {
+        // If no streak report exists, start from the beginning of the current month
+        const startOfMonth = new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth(),
+          1
+        );
+        const startDay = startOfMonth.getDate();
+
+        // Create streak report objects for each date from the beginning of the month to current date
+        for (let date = startDay; date <= currentDay; date++) {
+          newStreakReports.push({
+            date,
+            studyTimePercent: 0,
+            studyTime: { hours: 0, minutes: 0 },
+          });
+        }
+
+        // Add new streak reports to the streak report object
+        const currentYearKey = Object.keys(streakReport.years[0]).pop();
+        const currentMonthKey = Object.keys(
+          streakReport.years[0][currentYearKey]
+        ).pop();
+        streakReport.years[0][currentYearKey][currentMonthKey].push(
+          ...newStreakReports
+        );
+      }
+
+      // Save the updated streak report object to the database
+      await streakReport.save();
+
       // Disconnect from the database
       await disconnect();
-      // streakReport = JSON.stringify(streakReport, null, 2)
-      console.log("streakReport", streakReport)
-      return streakReport; // Return single document instead of an array
+
+      return streakReport; // Return updated streak report
     } catch (error) {
       console.error("Error fetching streak reports:", error);
       throw error;

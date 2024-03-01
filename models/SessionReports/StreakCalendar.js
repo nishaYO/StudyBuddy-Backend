@@ -3,7 +3,7 @@ const { Schema, model } = require("mongoose");
 
 const daySchema = new Schema({
   date: {
-    type: Number,
+    type: Date,
     required: true,
   },
   studyTimePercent: {
@@ -22,21 +22,7 @@ const daySchema = new Schema({
   },
 });
 
-const monthSchema = new Schema({
-  name: {
-    type: String,
-    required: true,
-  },
-  days: [daySchema],
-});
 
-const yearSchema = new Schema({
-  year: {
-    type: String,
-    required: true,
-  },
-  months: [monthSchema],
-});
 
 const streakCalendarSchema = new Schema({
   _id: mongoose.Schema.Types.ObjectId,
@@ -48,7 +34,7 @@ const streakCalendarSchema = new Schema({
     type: [Object],
     required: true,
   },
-  years: [yearSchema],
+  calendar: [daySchema],
   date: {
     type: Date,
     default: Date.now,
