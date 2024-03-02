@@ -1,12 +1,10 @@
 const TempSessions = require("../models/SessionReports/TempSessions");
 const TotalMinutes = require("../models/SessionReports/TotalMinutes");
 const StreakCalendar = require("../models/SessionReports/StreakCalendar");
-const MainStats = require("../models/SessionReports/MainStats");
 const { connect, disconnect, Types } = require("mongoose");
 const calculateStudyTime = require("../calculateStudyTime");
 const ReportsController = require("./reportsController");
 const fillMissingDates = require("./../utils/fillMissingDates");
-
 class SessionController {
   static async sendSessionData(input) {
     // function task: store the session data in the tempsessions db and trigger updateTotalMinutes function
@@ -116,14 +114,14 @@ class SessionController {
       const { startTime, endTime, userID } = sessionDoc;
 
       // Trigger updateStreakReports function
-      ReportsController.updateStreakReports(
+      await ReportsController.updateStreakReports(
         userID,
         startTime,
         totalStudyDuration
       );
 
       // Trigger updateMainStats function
-      ReportsController.updateMainStats(userID, endTime, totalStudyDuration);
+      await ReportsController.updateMainStats(userID, endTime, totalStudyDuration);
 
       // Disconnect from the database
       disconnect();

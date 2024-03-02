@@ -1,5 +1,9 @@
 const StreakCalendar = require("../models/SessionReports/StreakCalendar.js");
-const { connect, disconnect } = require("mongoose");
+const User = require("../models/userModel.js");
+const { connect, disconnect, Types } = require("mongoose");
+require("dotenv").config();
+const TotalMinutes = require("../models/SessionReports/TotalMinutes");
+const MainStats = require("../models/SessionReports/MainStats");
 
 class ReportsController {
   static async getStreakReports(userID) {
@@ -119,10 +123,11 @@ class ReportsController {
       // Check if the streakCalendar document exists
       if (streakCalendar) {
         // Find the index of the session with the matching startTime
-        const sessionIndex = streakCalendar.calendar.findIndex(
-          (session) => session.date.getTime() === startTime.getTime()
-        );
-
+        const sessionIndex = streakCalendar.calendar.findIndex((session) => {
+          const sessionDate = new Date(session.date);
+          return sessionDate.toDateString() === startTime.toDateString();
+        });
+        // todo: studytime percent recalc after update formula is totalstudytime for the day/ streakgoal time *100
         // If the session with the startTime is found
         if (sessionIndex !== -1) {
           // Update the session's studyTime field with the totalStudyDuration value
@@ -131,6 +136,21 @@ class ReportsController {
           );
           streakCalendar.calendar[sessionIndex].studyTime.minutes +=
             totalStudyDuration % 60;
+
+          // Calculate study time percentage
+          const streakGoalHours = parseInt(streakCalendar.streakGoal[0].hours);
+          const streakGoalMinutes = parseInt(
+            streakCalendar.streakGoal[0].minutes
+          );
+          const totalStudyTimeMinutes =
+            streakCalendar.calendar[sessionIndex].studyTime.hours * 60 +
+            streakCalendar.calendar[sessionIndex].studyTime.minutes;
+          const studyTimePercent =
+            (totalStudyTimeMinutes /
+              (streakGoalHours * 60 + streakGoalMinutes)) *
+            100;
+          streakCalendar.calendar[sessionIndex].studyTimePercent =
+            studyTimePercent;
         } else {
           // Log an error if the session with the startTime is not found
           console.error("Session with startTime not found.");
@@ -156,71 +176,86 @@ class ReportsController {
   static async getMainStats(userID) {}
   static async updateMainStats(userID, endTime, totalSessionDuration) {
     try {
-        // Connect to the database
-        await connect(process.env.MONGO_URI, {});
+      await connect(process.env.MONGO_URI, {});
 
-        // Calculate total study duration from the TotalMinutes document
-        const currentDate = new Date();
-        const pastWeekDate = new Date(currentDate);
-        pastWeekDate.setDate(pastWeekDate.getDate() - 7);
+      // get streakGoal from user
+      const user = await User.findOne({ _id: userID });
+      const streakGoal = JSON.parse(user.streakGoal);
 
-        // Find the TotalMinutes document for the user
-        const totalMinutesDoc = await TotalMinutes.findOne({ userID });
+      // Calculate total study duration from the TotalMinutes document
+      const currentDate = new Date();
+      const pastWeekDate = new Date(currentDate);
+      pastWeekDate.setDate(pastWeekDate.getDate() - 7);
+
+      // Find the TotalMinutes document for the user
+      const totalMinutesDoc = await TotalMinutes.findOne({ userID });
+
+      // Calculate total study duration for today, past week, and month
+      let todayTotal = 0;
+      let weekTotal = 0;
+      let monthTotal = 0;
+
+      if (totalMinutesDoc) {
+        const todayDate = currentDate.toDateString();
+        const pastWeekDates = [];
+        const pastMonthDates = [];
+
+        // Calculate past week and month dates
+        for (let i = 0; i < 7; i++) {
+          pastWeekDates.push(new Date(currentDate));
+          currentDate.setDate(currentDate.getDate() - 1);
+        }
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        const lastMonth = currentDate.getMonth();
 
         // Calculate total study duration for today, past week, and month
-        let todayTotal = 0;
-        let weekTotal = 0;
-        let monthTotal = 0;
-
-        if (totalMinutesDoc) {
-            const todayDate = currentDate.toDateString();
-            const pastWeekDates = [];
-            const pastMonthDates = [];
-
-            // Calculate past week and month dates
-            for (let i = 0; i < 7; i++) {
-                pastWeekDates.push(new Date(currentDate));
-                currentDate.setDate(currentDate.getDate() - 1);
-            }
-            currentDate.setMonth(currentDate.getMonth() + 1);
-            const lastMonth = currentDate.getMonth();
-
-            // Calculate total study duration for today, past week, and month
-            for (const entry of totalMinutesDoc.totalMinutes) {
-                const entryDate = entry.date.toDateString();
-                if (entryDate === todayDate) {
-                    todayTotal += entry.minutes;
-                }
-                if (entry.date >= pastWeekDates[pastWeekDates.length - 1]) {
-                    weekTotal += entry.minutes;
-                }
-                if (entry.date.getMonth() === lastMonth) {
-                    monthTotal += entry.minutes;
-                }
-            }
+        for (const entry of totalMinutesDoc.totalMinutes) {
+          const entryDate = entry.date.toDateString();
+          if (entryDate === todayDate) {
+            todayTotal += entry.minutes;
+          }
+          if (entry.date >= pastWeekDates[pastWeekDates.length - 1]) {
+            weekTotal += entry.minutes;
+          }
+          if (entry.date.getMonth() === lastMonth) {
+            monthTotal += entry.minutes;
+          }
         }
+      }
 
-        // Create a new MainStats document
-        const mainStatsDoc = new MainStats({
-            _id: new Types.ObjectId(),
-            userID: userID,
-            streakGoal: JSON.parse(streakGoal),
-            latestSession: { endTime: endTime, sessionDuration: totalSessionDuration },
-            totalStudyDuration: { today: todayTotal, week: weekTotal, month: monthTotal, total: totalMinutesDoc ? totalMinutesDoc.totalMinutes.reduce((acc, curr) => acc + curr.minutes, 0) : 0 },
-        });
+      // Create a new MainStats document
+      const mainStatsDoc = new MainStats({
+        _id: new Types.ObjectId(),
+        userID: userID,
+        streakGoal: streakGoal,
+        latestSession: {
+          endTime: endTime,
+          sessionDuration: totalSessionDuration,
+        },
+        totalStudyDuration: {
+          today: todayTotal,
+          week: weekTotal,
+          month: monthTotal,
+          total: totalMinutesDoc
+            ? totalMinutesDoc.totalMinutes.reduce(
+                (acc, curr) => acc + curr.minutes,
+                0
+              )
+            : 0,
+        },
+      });
 
-        // Save the new MainStats document
-        await mainStatsDoc.save();
-        console.log("MainStats document initialized successfully.");
+      // Save the new MainStats document
+      await mainStatsDoc.save();
+      console.log("MainStats document updated successfully.");
 
-        // Disconnect from the database
-        await disconnect();
+      // Disconnect from the database
+      await disconnect();
     } catch (error) {
-        console.error("Error initializing MainStats document:", error);
-        throw error;
+      console.error("Error updating MainStats document:", error);
+      throw error;
     }
-}
-
+  }
 }
 
 module.exports = ReportsController;
