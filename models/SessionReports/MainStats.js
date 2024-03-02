@@ -12,11 +12,11 @@ const mainStatsSchema = new Schema({
     required: true,
   },
   latestSession: {
-    type: [Object],
+    type: Object,
     required: true,
   },
   totalStudyDuration: {
-    type: [Object],
+    type: Object,
     required: true,
   },
   date: {

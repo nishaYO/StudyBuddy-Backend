@@ -20,7 +20,7 @@ sessionDoc.pauseTimeArray.forEach((pauseTime, index) => {
     const resumeTime = new Date(sessionDoc.resumeTimeArray[index].$date);
     totalPausedTime += resumeTime - pauseTime;
 });
-
+ 
 const totalPausedTimeInMins = totalPausedTime / (1000 * 60);
 console.log("totalPausedTimeInMins", totalPausedTimeInMins)
 

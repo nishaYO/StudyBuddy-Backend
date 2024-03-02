@@ -143,7 +143,7 @@ class UserController {
         //   useNewUrlParser: true,
         //   useUnifiedTopology: true,
       });
-      
+
       const userID = user.id;
 
       // Get the current date
@@ -175,13 +175,8 @@ class UserController {
         _id: new Types.ObjectId(),
         userID: userID,
         streakGoal: JSON.parse(streakGoal),
-        latestSession: [
-          {
-            date: currentDate,
-            sessionDuration: { hours: 0, minutes: 0, seconds: 0 },
-          },
-        ],
-        totalStudyDuration: [{ date: currentDate, totalMinutes: 0 }],
+        latestSession: { endTime: "", sessionDuration: 0 },
+        totalStudyDuration: { today: 0, week: 0, month: 0, total: 0 },
       });
 
       // Save the new TotalMinutes document
