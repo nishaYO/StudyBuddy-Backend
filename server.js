@@ -12,10 +12,25 @@ const userTypes = require("./types/userTypes.js");
 const notesTypes = require("./types/notesTypes.js");
 const sessionTypes = require("./types/sessionTypes.js");
 const reportsTypes = require("./types/reportsTypes.js");
+const mongoose = require('mongoose');
 
+// Load environment variables from .env file
 config();
 
 const app = express();
+
+// Connect to MongoDB
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => {
+  console.log('Connected to MongoDB');
+})
+.catch((error) => {
+  console.error('Error connecting to MongoDB:', error);
+  process.exit(1); // Exit the application if unable to connect to MongoDB
+});
 
 // Enable CORS for all routes
 app.use(cors());

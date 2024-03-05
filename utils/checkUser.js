@@ -1,11 +1,8 @@
-const { connect, disconnect } = require("mongoose");
 const User = require("../models/userModel.js");
 const bcrypt = require("bcrypt");
 async function checkUser({ _id, email, token }) {
   try {
-    await connect(process.env.MONGO_URI, {});
     const user = await User.findOne({ _id, email, token });
-    disconnect();
     return user;
   } catch (error) {
     console.error("Error checking user in DB:", error.message);
@@ -15,7 +12,6 @@ async function checkUser({ _id, email, token }) {
 
 async function checkUserLogin({ email, password }) {
   try {
-    await connect(process.env.MONGO_URI, {});
     console.log({ email, password });
     const user = await User.findOne({ email });
 
@@ -25,7 +21,6 @@ async function checkUserLogin({ email, password }) {
       return passwordMatch ? user : null;
     }
 
-    disconnect();
     return null;
   } catch (error) {
     console.error("Error checking user in DB:", error.message);

@@ -1,16 +1,12 @@
 const StreakCalendar = require("../models/SessionReports/StreakCalendar.js");
 const User = require("../models/userModel.js");
-const { connect, disconnect, Types } = require("mongoose");
-require("dotenv").config();
+const { Types } = require("mongoose");
 const TotalMinutes = require("../models/SessionReports/TotalMinutes");
 const MainStats = require("../models/SessionReports/MainStats");
 
 class ReportsController {
   static async getStreakReports(userID) {
     try {
-      // Connect to the database
-      await connect(process.env.MONGO_URI, {});
-
       // Query streak reports for the given userID
       let streakReport = await StreakCalendar.findOne({ userID });
 
@@ -102,9 +98,6 @@ class ReportsController {
       // Save the updated streak report object to the database
       await streakReport.save();
 
-      // Disconnect from the database
-      await disconnect();
-
       return streakReport; // Return updated streak report
     } catch (error) {
       console.error("Error fetching streak reports:", error);
@@ -112,23 +105,20 @@ class ReportsController {
     }
   }
 
-  static async updateStreakReports(userID, startTime, totalStudyDuration) {
+  static async updateStreakReports(userID, startDate, totalStudyDuration) {
     try {
-      // Connect to the database
-      await connect(process.env.MONGO_URI, {});
-
       // Find the document with the matching userID
       let streakCalendar = await StreakCalendar.findOne({ userID });
 
       // Check if the streakCalendar document exists
       if (streakCalendar) {
-        // Find the index of the session with the matching startTime
-        const sessionIndex = streakCalendar.calendar.findIndex((session) => {
-          const sessionDate = new Date(session.date);
-          return sessionDate.toDateString() === startTime.toDateString();
+        // Find the index of the session with the matching startDate
+        const sessionIndex = streakCalendar.calendar.findIndex((entry) => {
+          const startDateDateOnly = startDate.toISOString().split("T")[0];
+          const entryDateDateOnly = entry.date.toISOString().split("T")[0];
+          return startDateDateOnly === entryDateDateOnly;
         });
-        // todo: studytime percent recalc after update formula is totalstudytime for the day/ streakgoal time *100
-        // If the session with the startTime is found
+        // If the session with the startDate is found
         if (sessionIndex !== -1) {
           // Update the session's studyTime field with the totalStudyDuration value
           streakCalendar.calendar[sessionIndex].studyTime.hours += Math.floor(
@@ -167,26 +157,12 @@ class ReportsController {
     } catch (error) {
       console.error("Error updating streak reports:", error);
       throw error;
-    } finally {
-      // Disconnect from the database
-      await disconnect();
     }
   }
 
   static async getMainStats(userID) {}
   static async updateMainStats(userID, endTime, totalSessionDuration) {
     try {
-      await connect(process.env.MONGO_URI, {});
-
-      // get streakGoal from user
-      const user = await User.findOne({ _id: userID });
-      const streakGoal = JSON.parse(user.streakGoal);
-
-      // Calculate total study duration from the TotalMinutes document
-      const currentDate = new Date();
-      const pastWeekDate = new Date(currentDate);
-      pastWeekDate.setDate(pastWeekDate.getDate() - 7);
-
       // Find the TotalMinutes document for the user
       const totalMinutesDoc = await TotalMinutes.findOne({ userID });
 
@@ -196,43 +172,42 @@ class ReportsController {
       let monthTotal = 0;
 
       if (totalMinutesDoc) {
+        const currentDate = new Date();
         const todayDate = currentDate.toDateString();
-        const pastWeekDates = [];
-        const pastMonthDates = [];
+        const lastWeekDate = new Date(currentDate);
+        lastWeekDate.setDate(lastWeekDate.getDate() - 7);
+        const lastMonthDate = new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth(),
+          1
+        );
 
-        // Calculate past week and month dates
-        for (let i = 0; i < 7; i++) {
-          pastWeekDates.push(new Date(currentDate));
-          currentDate.setDate(currentDate.getDate() - 1);
-        }
-        currentDate.setMonth(currentDate.getMonth() + 1);
-        const lastMonth = currentDate.getMonth();
-
-        // Calculate total study duration for today, past week, and month
         for (const entry of totalMinutesDoc.totalMinutes) {
           const entryDate = entry.date.toDateString();
           if (entryDate === todayDate) {
             todayTotal += entry.minutes;
           }
-          if (entry.date >= pastWeekDates[pastWeekDates.length - 1]) {
+          if (entry.date >= lastWeekDate) {
             weekTotal += entry.minutes;
           }
-          if (entry.date.getMonth() === lastMonth) {
+          if (entry.date >= lastMonthDate) {
             monthTotal += entry.minutes;
           }
         }
       }
 
-      // Create a new MainStats document
-      const mainStatsDoc = new MainStats({
-        _id: new Types.ObjectId(),
-        userID: userID,
-        streakGoal: streakGoal,
-        latestSession: {
-          endTime: endTime,
+      // Find the MainStats document for the user
+      let mainStatsDoc = await MainStats.findOne({ userID });
+
+      if (mainStatsDoc) {
+        // Update the latestSession and totalStudyDuration fields
+        mainStatsDoc.latestSession = {
+          endTime: new Date(parseInt(endTime)),
           sessionDuration: totalSessionDuration,
-        },
-        totalStudyDuration: {
+        };
+
+        // Update total study duration fields
+        mainStatsDoc.totalStudyDuration = {
           today: todayTotal,
           week: weekTotal,
           month: monthTotal,
@@ -242,15 +217,14 @@ class ReportsController {
                 0
               )
             : 0,
-        },
-      });
+        };
 
-      // Save the new MainStats document
-      await mainStatsDoc.save();
-      console.log("MainStats document updated successfully.");
-
-      // Disconnect from the database
-      await disconnect();
+        // Save the updated MainStats document
+        await mainStatsDoc.save();
+        console.log("MainStats document updated successfully.");
+      } else {
+        console.error("MainStats document not found for user ID:", userID);
+      }
     } catch (error) {
       console.error("Error updating MainStats document:", error);
       throw error;

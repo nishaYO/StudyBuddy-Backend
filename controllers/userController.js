@@ -13,7 +13,7 @@ const {
 } = require("../utils/createTempUser.js");
 const sendMail = require("../utils/sendMail.js");
 const { checkUser, checkUserLogin } = require("../utils/checkUser.js");
-const { connect, Types, disconnect } = require("mongoose");
+const { Types} = require("mongoose");
 
 class UserController {
   static async signup({
@@ -57,14 +57,16 @@ class UserController {
   }
 
   static async verifyEmail({ code, email }) {
-    const foundTempUser = await getTempUserFromDB(email);
-    if (!foundTempUser || foundTempUser.verificationCode !== code) {
-      return { verified: false, user: null, token: null };
-    }
-    const { user, token, streakGoal } = await createUser(foundTempUser);
-    this.initializeDBs(user, streakGoal);
-    await deleteTempUser(email);
-    return { verified: true, user, token };
+    try {
+      const foundTempUser = await getTempUserFromDB(email);
+      if (!foundTempUser || foundTempUser.verificationCode !== code) {
+        return { verified: false, user: null, token: null };
+      }
+      const { user, token, streakGoal } = await createUser(foundTempUser);
+      this.initializeDBs(user, streakGoal);
+      await deleteTempUser(email);
+      return { verified: true, user, token };
+    } catch (error) {}
   }
 
   static async autoLogin({ id, email, token }) {
@@ -139,11 +141,6 @@ class UserController {
 
   static async initializeDBs(user, streakGoal) {
     try {
-      await connect(process.env.MONGO_URI, {
-        //   useNewUrlParser: true,
-        //   useUnifiedTopology: true,
-      });
-
       const userID = user.id;
 
       // Get the current date
@@ -178,12 +175,12 @@ class UserController {
         latestSession: { endTime: "", sessionDuration: 0 },
         totalStudyDuration: { today: 0, week: 0, month: 0, total: 0 },
       });
+      await streakCalendarDoc.save();
 
       // Save the new TotalMinutes document
       await totalMinutesDoc.save();
 
       // Save the new StreakCalendar document
-      await streakCalendarDoc.save();
 
       // Save the new MainStats document
       await mainStatsDoc.save();
@@ -192,9 +189,7 @@ class UserController {
     } catch (error) {
       console.error("Error initializing databases:", error);
       throw error;
-    } finally {
-      disconnect();
-    }
+    } 
   }
 }
 

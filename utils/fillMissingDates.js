@@ -1,15 +1,9 @@
 const TotalMinutes = require("./../models/SessionReports/TotalMinutes");
 const StreakCalendar = require("./../models/SessionReports/StreakCalendar");
-const { connect, disconnect } = require("mongoose");
-require("dotenv").config();
 
 const fillMissingDates = async (userID) => {
   // function task: add the dates till current date to both totalminutes and streakcalendar dbs with zero values.
   try {
-    await connect(process.env.MONGO_URI, {
-      //   useNewUrlParser: true,
-      //   useUnifiedTopology: true,
-    });
     // Find the TotalMinutes document for the user
     const totalMinutesDoc = await TotalMinutes.findOne({ userID });
 
@@ -77,8 +71,6 @@ const fillMissingDates = async (userID) => {
     console.error("Error filling missing dates:", error);
     throw error;
   } finally {
-    // Disconnect from the database
-    await disconnect();
   }
 };
 
@@ -103,4 +95,4 @@ const generateDateRange = (startDate, endDate) => {
   return dates;
 };
 
-module.exports = { fillMissingDates };
+module.exports = fillMissingDates;

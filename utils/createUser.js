@@ -1,16 +1,11 @@
-const { connect, Types, disconnect } = require("mongoose");
+const { Types } = require("mongoose");
 const User = require("../models/userModel.js");
 const { hash } = require("bcrypt");
 const generateToken = require("./../utils/generateToken.js");
-require("dotenv").config();
 
 const createUser = async (user) => {
-  console.log("CreateUser Entered..")
+  console.log("CreateUser Entered..");
   try {
-    await connect(process.env.MONGO_URI, {
-      //   useNewUrlParser: true,
-      //   useUnifiedTopology: true,
-    });
     const token = generateToken(user);
     const hashedPassword = await hash(user.password, 10);
 
@@ -52,8 +47,6 @@ const createUser = async (user) => {
   } catch (error) {
     console.error("Error creating user:", error.message);
     return null;
-  } finally {
-    disconnect();
   }
 };
 
