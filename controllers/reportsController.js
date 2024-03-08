@@ -3,102 +3,21 @@ const User = require("../models/userModel.js");
 const { Types } = require("mongoose");
 const TotalMinutes = require("../models/SessionReports/TotalMinutes");
 const MainStats = require("../models/SessionReports/MainStats");
+const fillMissingDates = require("./../utils/fillMissingDates.js");
 
 class ReportsController {
   static async getStreakReports(userID) {
     try {
       // Query streak reports for the given userID
       let streakReport = await StreakCalendar.findOne({ userID });
+      console.log("streakReport", streakReport);
 
-      if (!streakReport) {
-        // If no streak report found for the user, return null
-        return null;
-      }
-
-      console.log(streakReport);
-      // Extract years data from the streak report
-      const years = streakReport.years;
-      const yearsData = Object.entries(years[0]).slice(0, -2);
-      console.log("yearsData: ", yearsData);
-      // Get the last date from the streak report or initialize to null if no streak report exists
-      const lastYearData = yearsData[yearsData.length - 1];
-      // Extract the month data
-      const monthData = Object.values(lastYearData[1])[0];
-      // Access the last element of the month data array
-      const lastDateObject = monthData[monthData.length - 1];
-      // Get the date from the last date object
-      const lastDate = lastDateObject.date;
-
-      // Calculate the current date
-      const currentDate = new Date();
-      const currentDay = currentDate.getDate();
-
-      // If lastDate exists, calculate dates between lastDate and current date
-      let newStreakReports = [];
-      if (lastDate) {
-        if (lastDate != currentDay) {
-          const startDate = new Date();
-          startDate.setDate(lastDate + 1); // Start from the day after lastDate
-
-          // Create streak report objects for each date between lastDate and current date
-          for (let date = startDate.getDate(); date <= currentDay; date++) {
-            newStreakReports.push({
-              date,
-              studyTimePercent: 0,
-              studyTime: { hours: 0, minutes: 0 },
-            });
-          }
-          console.log("newStreakReports", newStreakReports);
-          // Update the streak report object with new streak reports
-          if (
-            streakReport &&
-            streakReport.years &&
-            streakReport.years[0] &&
-            Object.keys(streakReport.years[0]).length > 0
-          ) {
-            const lastYearKey = Object.keys(streakReport.years[0]).pop();
-            const lastMonthKey = Object.keys(
-              streakReport.years[0][lastYearKey]
-            ).pop();
-            if (streakReport.years[0][lastYearKey][lastMonthKey]) {
-              streakReport.years[0][lastYearKey][lastMonthKey].push(
-                ...newStreakReports
-              );
-            }
-          }
-        }
-      } else {
-        // If no streak report exists, start from the beginning of the current month
-        const startOfMonth = new Date(
-          currentDate.getFullYear(),
-          currentDate.getMonth(),
-          1
-        );
-        const startDay = startOfMonth.getDate();
-
-        // Create streak report objects for each date from the beginning of the month to current date
-        for (let date = startDay; date <= currentDay; date++) {
-          newStreakReports.push({
-            date,
-            studyTimePercent: 0,
-            studyTime: { hours: 0, minutes: 0 },
-          });
-        }
-
-        // Add new streak reports to the streak report object
-        const currentYearKey = Object.keys(streakReport.years[0]).pop();
-        const currentMonthKey = Object.keys(
-          streakReport.years[0][currentYearKey]
-        ).pop();
-        streakReport.years[0][currentYearKey][currentMonthKey].push(
-          ...newStreakReports
-        );
-      }
-
-      // Save the updated streak report object to the database
-      await streakReport.save();
-
-      return streakReport; // Return updated streak report
+      // Fill any missing dates in the streak report
+      await fillMissingDates(userID);
+      await this.updateMainStats(userID)
+      console.log("updated  the main stats")
+      // Return the streak report
+      return streakReport;
     } catch (error) {
       console.error("Error fetching streak reports:", error);
       throw error;
@@ -109,7 +28,7 @@ class ReportsController {
     try {
       // Find the document with the matching userID
       let streakCalendar = await StreakCalendar.findOne({ userID });
-
+      startDate.setDate(startDate.getDate() + 1);
       // Check if the streakCalendar document exists
       if (streakCalendar) {
         // Find the index of the session with the matching startDate
@@ -160,76 +79,92 @@ class ReportsController {
     }
   }
 
-  static async getMainStats(userID) {}
-  static async updateMainStats(userID, endTime, totalSessionDuration) {
+  static async getMainStats(userID) {
     try {
-      // Find the TotalMinutes document for the user
-      const totalMinutesDoc = await TotalMinutes.findOne({ userID });
+      // Query main stats for the given userID
+      let mainStats = await MainStats.findOne({ userID });
+      console.log("mainStats", mainStats);
 
-      // Calculate total study duration for today, past week, and month
-      let todayTotal = 0;
-      let weekTotal = 0;
-      let monthTotal = 0;
-
-      if (totalMinutesDoc) {
-        const currentDate = new Date();
-        const todayDate = currentDate.toDateString();
-        const lastWeekDate = new Date(currentDate);
-        lastWeekDate.setDate(lastWeekDate.getDate() - 7);
-        const lastMonthDate = new Date(
-          currentDate.getFullYear(),
-          currentDate.getMonth(),
-          1
-        );
-
-        for (const entry of totalMinutesDoc.totalMinutes) {
-          const entryDate = entry.date.toDateString();
-          if (entryDate === todayDate) {
-            todayTotal += entry.minutes;
-          }
-          if (entry.date >= lastWeekDate) {
-            weekTotal += entry.minutes;
-          }
-          if (entry.date >= lastMonthDate) {
-            monthTotal += entry.minutes;
-          }
-        }
-      }
-
-      // Find the MainStats document for the user
-      let mainStatsDoc = await MainStats.findOne({ userID });
-
-      if (mainStatsDoc) {
-        // Update the latestSession and totalStudyDuration fields
-        mainStatsDoc.latestSession = {
-          endTime: new Date(parseInt(endTime)),
-          sessionDuration: totalSessionDuration,
-        };
-
-        // Update total study duration fields
-        mainStatsDoc.totalStudyDuration = {
-          today: todayTotal,
-          week: weekTotal,
-          month: monthTotal,
-          total: totalMinutesDoc
-            ? totalMinutesDoc.totalMinutes.reduce(
-                (acc, curr) => acc + curr.minutes,
-                0
-              )
-            : 0,
-        };
-
-        // Save the updated MainStats document
-        await mainStatsDoc.save();
-        console.log("MainStats document updated successfully.");
-      } else {
-        console.error("MainStats document not found for user ID:", userID);
-      }
+      // Return the main stats
+      return mainStats;
     } catch (error) {
-      console.error("Error updating MainStats document:", error);
+      console.error("Error fetching main stats:", error);
       throw error;
     }
   }
+
+  static async updateMainStats(userID, endTime = null, totalSessionDuration = null) {
+    try {
+        // Find the TotalMinutes document for the user
+        const totalMinutesDoc = await TotalMinutes.findOne({ userID });
+
+        // Calculate total study duration for today, past week, and month
+        let todayTotal = 0;
+        let weekTotal = 0;
+        let monthTotal = 0;
+
+        if (totalMinutesDoc) {
+            const currentDate = new Date();
+            const todayDate = currentDate.toDateString();
+            const lastWeekDate = new Date(currentDate);
+            lastWeekDate.setDate(lastWeekDate.getDate() - 7);
+            const lastMonthDate = new Date(
+                currentDate.getFullYear(),
+                currentDate.getMonth(),
+                1
+            );
+
+            for (const entry of totalMinutesDoc.totalMinutes) {
+                const entryDate = entry.date.toDateString();
+                if (entryDate === todayDate) {
+                    todayTotal += entry.minutes;
+                }
+                if (entry.date >= lastWeekDate) {
+                    weekTotal += entry.minutes;
+                }
+                if (entry.date >= lastMonthDate) {
+                    monthTotal += entry.minutes;
+                }
+            }
+        }
+
+        // Find the MainStats document for the user
+        let mainStatsDoc = await MainStats.findOne({ userID });
+
+        if (mainStatsDoc) {
+            // Update the latestSession and totalStudyDuration fields if endTime and totalSessionDuration are provided
+            if (endTime && totalSessionDuration) {
+                mainStatsDoc.latestSession = {
+                    endTime: new Date(parseInt(endTime)),
+                    sessionDuration: totalSessionDuration,
+                };
+            }
+
+            // Update total study duration fields
+            mainStatsDoc.totalStudyDuration = {
+                today: todayTotal,
+                week: weekTotal,
+                month: monthTotal,
+                total: totalMinutesDoc
+                    ? totalMinutesDoc.totalMinutes.reduce(
+                        (acc, curr) => acc + curr.minutes,
+                        0
+                    )
+                    : 0,
+            };
+
+            // Save the updated MainStats document
+            await mainStatsDoc.save();
+            console.log("MainStats document updated successfully.");
+        } else {
+            console.error("MainStats document not found for user ID:", userID);
+        }
+    } catch (error) {
+        console.error("Error updating MainStats document:", error);
+        throw error;
+    }
+}
+
 }
 
 module.exports = ReportsController;

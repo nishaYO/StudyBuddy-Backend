@@ -83,16 +83,18 @@ const isSameDate = (date1, date2) => {
   );
 };
 
-// Function to generate a range of dates between two dates (inclusive)
+// Function to generate a range of dates between two dates
 const generateDateRange = (startDate, endDate) => {
   const dates = [];
   let currentDate = new Date(startDate);
   currentDate.setDate(currentDate.getDate() + 1);
+  endDate.setDate(endDate.getDate() + 1);
   while (currentDate <= endDate) {
     dates.push(new Date(currentDate));
     currentDate.setDate(currentDate.getDate() + 1);
   }
   return dates;
 };
+
 
 module.exports = fillMissingDates;
