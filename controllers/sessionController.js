@@ -1,6 +1,7 @@
 const TempSessions = require("../models/SessionReports/TempSessions");
 const TotalMinutes = require("../models/SessionReports/TotalMinutes");
 const StreakCalendar = require("../models/SessionReports/StreakCalendar");
+const User = require("../models/userModel");
 const { Types } = require("mongoose");
 const calculateStudyTime = require("../calculateStudyTime");
 const ReportsController = require("./reportsController");
@@ -69,17 +70,17 @@ class SessionController {
         userID: sessionDoc.userID,
       });
 
-      const startTimeStamp = parseInt(sessionDoc.startTime); // Parse the timestamp string to a number
-      const startDate = new Date(startTimeStamp); // Create a Date object from the timestamp
+      const endTimeStamp = parseInt(sessionDoc.endTime); // Parse the timestamp string to a number
+      const endDate = new Date(endTimeStamp); // Create a Date object from the timestamp
 
       await fillMissingDates(sessionDoc.userID);
 
       // Find the index of the session date in the totalMinutes array
       const sessionDateIndex = totalMinutesDoc.totalMinutes.findIndex(
         (entry) => {
-          const startDateDateOnly = startDate.toISOString().split("T")[0];
+          const endDateDateOnly = endDate.toISOString().split("T")[0];
           const entryDateDateOnly = entry.date.toISOString().split("T")[0];
-          return startDateDateOnly === entryDateDateOnly;
+          return endDateDateOnly === entryDateDateOnly;
         }
       );
 
@@ -101,14 +102,13 @@ class SessionController {
 
       // Updated studyDuration
       const totalStudyDuration = totalMinutesInSession;
-
       // Extracting from sessionDoc
       const { endTime, userID } = sessionDoc;
 
       // Trigger updateStreakReports function
       await ReportsController.updateStreakReports(
         userID,
-        startDate,
+        endDate,
         totalStudyDuration
       );
 
@@ -125,3 +125,5 @@ class SessionController {
 }
 
 module.exports = SessionController;
+// get streak reports function in the baceknd that will look up the totalminutes doc for hte user totalminutes field array last index start and compare wiht
+// the streak goal(taken from streakcalendar and converted in minutes)if = or more than will increase the counter and return the counter in the frontend

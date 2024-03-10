@@ -14,8 +14,8 @@ class ReportsController {
 
       // Fill any missing dates in the streak report
       await fillMissingDates(userID);
-      await this.updateMainStats(userID)
-      console.log("updated  the main stats")
+      await this.updateMainStats(userID);
+      console.log("updated  the main stats");
       // Return the streak report
       return streakReport;
     } catch (error) {
@@ -24,20 +24,19 @@ class ReportsController {
     }
   }
 
-  static async updateStreakReports(userID, startDate, totalStudyDuration) {
+  static async updateStreakReports(userID, endDate, totalStudyDuration) {
     try {
       // Find the document with the matching userID
       let streakCalendar = await StreakCalendar.findOne({ userID });
-      startDate.setDate(startDate.getDate() + 1);
       // Check if the streakCalendar document exists
       if (streakCalendar) {
-        // Find the index of the session with the matching startDate
+        // Find the index of the session with the matching endDate
         const sessionIndex = streakCalendar.calendar.findIndex((entry) => {
-          const startDateDateOnly = startDate.toISOString().split("T")[0];
+          const endDateDateOnly = endDate.toISOString().split("T")[0];
           const entryDateDateOnly = entry.date.toISOString().split("T")[0];
-          return startDateDateOnly === entryDateDateOnly;
+          return endDateDateOnly === entryDateDateOnly;
         });
-        // If the session with the startDate is found
+        // If the session with the endDate is found
         if (sessionIndex !== -1) {
           // Update the session's studyTime field with the totalStudyDuration value
           streakCalendar.calendar[sessionIndex].studyTime.hours += Math.floor(
@@ -47,17 +46,15 @@ class ReportsController {
             totalStudyDuration % 60;
 
           // Calculate study time percentage
-          const streakGoalHours = parseInt(streakCalendar.streakGoal[0].hours);
-          const streakGoalMinutes = parseInt(
-            streakCalendar.streakGoal[0].minutes
-          );
+          const user = await User.findOne({ _id: userID });
+          const { hours, minutes } = JSON.parse(user.streakGoal);
+          const streakGoalHours = parseInt(hours);
+          const streakGoalMinutes = parseInt(minutes);
+          const streakGoal = streakGoalHours * 60 + streakGoalMinutes;
           const totalStudyTimeMinutes =
             streakCalendar.calendar[sessionIndex].studyTime.hours * 60 +
             streakCalendar.calendar[sessionIndex].studyTime.minutes;
-          const studyTimePercent =
-            (totalStudyTimeMinutes /
-              (streakGoalHours * 60 + streakGoalMinutes)) *
-            100;
+          const studyTimePercent = (totalStudyTimeMinutes / streakGoal) * 100;
           streakCalendar.calendar[sessionIndex].studyTimePercent =
             studyTimePercent;
         } else {
@@ -93,78 +90,130 @@ class ReportsController {
     }
   }
 
-  static async updateMainStats(userID, endTime = null, totalSessionDuration = null) {
+  static async updateMainStats(
+    userID,
+    endTime = null,
+    totalSessionDuration = null
+  ) {
     try {
-        // Find the TotalMinutes document for the user
-        const totalMinutesDoc = await TotalMinutes.findOne({ userID });
+      // Find the TotalMinutes document for the user
+      const totalMinutesDoc = await TotalMinutes.findOne({ userID });
 
-        // Calculate total study duration for today, past week, and month
-        let todayTotal = 0;
-        let weekTotal = 0;
-        let monthTotal = 0;
+      // Calculate total study duration for today, past week, and month
+      let todayTotal = 0;
+      let weekTotal = 0;
+      let monthTotal = 0;
 
-        if (totalMinutesDoc) {
-            const currentDate = new Date();
-            const todayDate = currentDate.toDateString();
-            const lastWeekDate = new Date(currentDate);
-            lastWeekDate.setDate(lastWeekDate.getDate() - 7);
-            const lastMonthDate = new Date(
-                currentDate.getFullYear(),
-                currentDate.getMonth(),
-                1
-            );
+      if (totalMinutesDoc) {
+        const currentDate = new Date();
+        const todayDate = currentDate.toDateString();
+        const lastWeekDate = new Date(currentDate);
+        lastWeekDate.setDate(lastWeekDate.getDate() - 7);
+        const lastMonthDate = new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth(),
+          1
+        );
 
-            for (const entry of totalMinutesDoc.totalMinutes) {
-                const entryDate = entry.date.toDateString();
-                if (entryDate === todayDate) {
-                    todayTotal += entry.minutes;
-                }
-                if (entry.date >= lastWeekDate) {
-                    weekTotal += entry.minutes;
-                }
-                if (entry.date >= lastMonthDate) {
-                    monthTotal += entry.minutes;
-                }
-            }
+        for (const entry of totalMinutesDoc.totalMinutes) {
+          const entryDate = entry.date.toDateString();
+          if (entryDate === todayDate) {
+            todayTotal += entry.minutes;
+          }
+          if (entry.date >= lastWeekDate) {
+            weekTotal += entry.minutes;
+          }
+          if (entry.date >= lastMonthDate) {
+            monthTotal += entry.minutes;
+          }
+        }
+      }
+
+      // Find the MainStats document for the user
+      let mainStatsDoc = await MainStats.findOne({ userID });
+
+      if (mainStatsDoc) {
+        // Update the latestSession and totalStudyDuration fields if endTime and totalSessionDuration are provided
+        if (endTime && totalSessionDuration) {
+          mainStatsDoc.latestSession = {
+            endTime: new Date(parseInt(endTime)),
+            sessionDuration: totalSessionDuration,
+          };
         }
 
-        // Find the MainStats document for the user
-        let mainStatsDoc = await MainStats.findOne({ userID });
+        // Update total study duration fields
+        mainStatsDoc.totalStudyDuration = {
+          today: todayTotal,
+          week: weekTotal,
+          month: monthTotal,
+          total: totalMinutesDoc
+            ? totalMinutesDoc.totalMinutes.reduce(
+                (acc, curr) => acc + curr.minutes,
+                0
+              )
+            : 0,
+        };
 
-        if (mainStatsDoc) {
-            // Update the latestSession and totalStudyDuration fields if endTime and totalSessionDuration are provided
-            if (endTime && totalSessionDuration) {
-                mainStatsDoc.latestSession = {
-                    endTime: new Date(parseInt(endTime)),
-                    sessionDuration: totalSessionDuration,
-                };
-            }
-
-            // Update total study duration fields
-            mainStatsDoc.totalStudyDuration = {
-                today: todayTotal,
-                week: weekTotal,
-                month: monthTotal,
-                total: totalMinutesDoc
-                    ? totalMinutesDoc.totalMinutes.reduce(
-                        (acc, curr) => acc + curr.minutes,
-                        0
-                    )
-                    : 0,
-            };
-
-            // Save the updated MainStats document
-            await mainStatsDoc.save();
-            console.log("MainStats document updated successfully.");
-        } else {
-            console.error("MainStats document not found for user ID:", userID);
-        }
+        // Save the updated MainStats document
+        await mainStatsDoc.save();
+        console.log("MainStats document updated successfully.");
+      } else {
+        console.error("MainStats document not found for user ID:", userID);
+      }
     } catch (error) {
-        console.error("Error updating MainStats document:", error);
-        throw error;
+      console.error("Error updating MainStats document:", error);
+      throw error;
     }
-}
+  }
 
+  static async getCurrentStreak(userID) {
+    try {
+      const user = await User.findOne({ _id: userID });
+      const { hours, minutes } = JSON.parse(user.streakGoal);
+      const streakGoalHours = parseInt(hours);
+      const streakGoalMinutes = parseInt(minutes);
+      const streakGoal = streakGoalHours * 60 + streakGoalMinutes;
+
+      // Fetch total study minutes for the user
+      const totalMinutesDoc = await TotalMinutes.findOne({ userID });
+
+      // Calculate streak
+      let streakCounter = 0;
+      for (let i = totalMinutesDoc.totalMinutes.length - 1; i >= 0; i--) {
+        const dayTotalMinutes = totalMinutesDoc.totalMinutes[i].minutes;
+        if (dayTotalMinutes >= streakGoal) {
+          streakCounter++;
+        } else {
+          break; // End streak calculation if the streak is broken
+        }
+      }
+      // console.log("streakCounter", streakCounter);
+      return streakCounter;
+    } catch (error) {
+      console.error("Error fetching streak reports:", error);
+      throw error;
+    }
+  }
+  
+  static async updateStreakGoal(userID, newStreakGoal) {
+    try {
+      // Find the user by userID and update the streakGoal field
+      const updatedUser = await User.findOneAndUpdate(
+        { _id: userID },
+        { streakGoal: newStreakGoal },
+        { new: true } // To return the updated user document
+      );
+
+      if (!updatedUser) {
+        throw new Error("User not found");
+      }
+
+      return updatedUser;
+    } catch (error) {
+      console.error("Error updating streak goal:", error);
+      throw error;
+    }
+  }
 }
 
 module.exports = ReportsController;

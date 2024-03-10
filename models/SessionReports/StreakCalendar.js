@@ -30,10 +30,6 @@ const streakCalendarSchema = new Schema({
     type: String,
     required: true,
   },
-  streakGoal: {
-    type: [Object],
-    required: true,
-  },
   calendar: [daySchema],
   date: {
     type: Date,

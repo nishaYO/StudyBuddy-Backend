@@ -7,10 +7,6 @@ const mainStatsSchema = new Schema({
     type: String,
     required: true,
   },
-  streakGoal: {
-    type: [Object],
-    required: true,
-  },
   latestSession: {
     type: Object,
     required: true,

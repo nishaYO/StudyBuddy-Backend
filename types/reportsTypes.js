@@ -1,7 +1,7 @@
 const { gql } = require("apollo-server-express");
 
 const reportsTypes = gql`
-  type Goal {
+  input Goal {
     hours: String!
     minutes: String!
   }
@@ -20,7 +20,6 @@ const reportsTypes = gql`
   type StreakReport {
     _id: ID!
     userID: String!
-    streakGoal: [Goal!]!
     date: String!
     calendar: [Day]
   }
@@ -40,7 +39,6 @@ const reportsTypes = gql`
   type MainStats {
     _id: ID!
     userID: String!
-    streakGoal: [Goal!]!
     latestSession: LatestSession!
     totalStudyDuration: TotalStudyDuration!
     date: String!
@@ -49,6 +47,11 @@ const reportsTypes = gql`
   type Query {
     getStreakReports(userID: ID!): StreakReport
     getMainStats(userID: ID!): MainStats
+    getCurrentStreak(userID: ID!): Int
+  }
+
+  type Mutation {
+    updateStreakGoal(userID: ID!, newStreakGoal: Goal!): Boolean
   }
 `;
 

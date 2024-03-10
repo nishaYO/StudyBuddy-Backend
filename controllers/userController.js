@@ -62,8 +62,8 @@ class UserController {
       if (!foundTempUser || foundTempUser.verificationCode !== code) {
         return { verified: false, user: null, token: null };
       }
-      const { user, token, streakGoal } = await createUser(foundTempUser);
-      this.initializeDBs(user, streakGoal);
+      const { user, token } = await createUser(foundTempUser);
+      this.initializeDBs(user);
       await deleteTempUser(email);
       return { verified: true, user, token };
     } catch (error) {}
@@ -139,7 +139,7 @@ class UserController {
     }
   }
 
-  static async initializeDBs(user, streakGoal) {
+  static async initializeDBs(user) {
     try {
       const userID = user.id;
 
@@ -157,7 +157,6 @@ class UserController {
       const streakCalendarDoc = new StreakCalendar({
         _id: new Types.ObjectId(),
         userID: userID,
-        streakGoal: JSON.parse(streakGoal),
         calendar: [
           {
             date: currentDate,
@@ -171,7 +170,6 @@ class UserController {
       const mainStatsDoc = new MainStats({
         _id: new Types.ObjectId(),
         userID: userID,
-        streakGoal: JSON.parse(streakGoal),
         latestSession: { endTime: "", sessionDuration: 0 },
         totalStudyDuration: { today: 0, week: 0, month: 0, total: 0 },
       });
