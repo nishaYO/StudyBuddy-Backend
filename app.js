@@ -8,10 +8,12 @@ const userResolvers = require("./resolvers/userResolvers.js");
 const notesResolvers = require("./resolvers/notesResolvers.js");
 const sessionResolvers = require("./resolvers/sessionResolvers.js");
 const reportsResolvers = require("./resolvers/reportsResolvers.js");
+const contactFormResolvers = require("./resolvers/contactFormResolvers.js");
 const userTypes = require("./types/userTypes.js");
 const notesTypes = require("./types/notesTypes.js");
 const sessionTypes = require("./types/sessionTypes.js");
 const reportsTypes = require("./types/reportsTypes.js");
+const contactFormTypes = require("./types/contactTypes.js");
 const mongoose = require('mongoose');
 
 // Load environment variables from .env file
@@ -36,8 +38,8 @@ mongoose.connect(process.env.MONGO_URI, {
 app.use(cors());
 app.use(express.json());
 
-const mergedTypeDefs = mergeTypeDefs([userTypes, notesTypes, sessionTypes, reportsTypes]);
-const mergedResolvers = mergeResolvers([userResolvers, notesResolvers, sessionResolvers, reportsResolvers]);
+const mergedTypeDefs = mergeTypeDefs([userTypes, notesTypes, sessionTypes, reportsTypes, contactFormTypes]);
+const mergedResolvers = mergeResolvers([userResolvers, notesResolvers, sessionResolvers, reportsResolvers, contactFormResolvers]);
 
 const server = new ApolloServer({
   typeDefs: mergedTypeDefs,
