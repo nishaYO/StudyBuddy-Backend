@@ -6,6 +6,8 @@ const userResolvers = {
     verifyEmail: (_, { input }) => UserController.verifyEmail(input),
     login: (_, { input }) => UserController.login(input),
     forgotPassword: (_, { email }) => UserController.forgotPassword(email),
+    deleteUser: (_, { userID }) => UserController.deleteUser({ userID }),
+    resetPassword: (_, {input }) => UserController.resetPassword({input }),
   },
   Query: {
     user: (_, { id }) => UserController.getUserById(id),

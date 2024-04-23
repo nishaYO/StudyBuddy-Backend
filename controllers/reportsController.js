@@ -169,6 +169,7 @@ class ReportsController {
   static async getCurrentStreak(userID) {
     try {
       const user = await User.findOne({ _id: userID });
+      console.log(user);
       const { hours, minutes } = JSON.parse(user.streakGoal);
       const streakGoalHours = parseInt(hours);
       const streakGoalMinutes = parseInt(minutes);

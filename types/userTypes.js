@@ -53,21 +53,36 @@ const userTypes = gql`
     token: String!
   }
 
+  type ForgotPassword {
+    email: String!
+    codeSent: Boolean
+  }
+  type DeleteUserResult {
+    success: Boolean!
+    message: String
+  }
   type Query {
     user(id: ID!): User
     autoLogin(input: AuthInput): AuthResult!
   }
 
+  input ResetPasswordInput {
+    email: String!
+    newPassword: String!
+    id: ID!
+  }
+
+  type ResetPasswordOutput {
+    message: String!
+    success: Boolean!
+  }
   type Mutation {
     signup(input: SignupInput): SignupOutput
     verifyEmail(input: VerifyEmailInput): VerifyEmailOutput
     login(input: LoginInput): LoginOutput
     forgotPassword(email: String!): ForgotPassword
-  }
-
-  type ForgotPassword {
-    email: String!
-    codeSent: Boolean
+    deleteUser(userID: ID!): DeleteUserResult!
+    resetPassword(input: ResetPasswordInput!): ResetPasswordOutput
   }
 `;
 

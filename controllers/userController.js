@@ -1,4 +1,5 @@
 const User = require("../models/userModel.js");
+const DeletedUser = require("../models/DeletedUser.js");
 const TotalMinutes = require("../models/SessionReports/TotalMinutes.js");
 const StreakCalendar = require("../models/SessionReports/StreakCalendar.js");
 const MainStats = require("../models/SessionReports/MainStats.js");
@@ -37,7 +38,7 @@ class UserController {
       const foundTempUser = await getTempUserFromDB(email);
 
       if (foundTempUser) {
-        await updateTempUser(email, { verificationCode });
+        await updateTempUser(email, { verificationCode, password });
       } else {
         const tempUser = {
           name,
@@ -51,10 +52,33 @@ class UserController {
         };
         await storeTempUserInDB(tempUser);
       }
-      
+
       return { CodeMailed: true };
     } else {
       return { CodeMailed: false };
+    }
+  }
+
+  static async deleteUser({ userID }) {
+    // Check if user exists
+    const userFound = await User.findById(userID);
+
+    if (userFound) {
+      try {
+        // Transfer user to deletedUser collection
+        const deletedUserData = { ...userFound.toObject() };
+        await DeletedUser.create(deletedUserData);
+
+        // Delete user from User collection
+        await User.deleteOne({ _id: userID });
+
+        return { success: true, message: "User deleted successfully" };
+      } catch (error) {
+        console.error("Error deleting user:", error.message);
+        return { success: false, message: "Error deleting user" };
+      }
+    } else {
+      return { success: false, message: "User not found" };
     }
   }
 
@@ -70,7 +94,7 @@ class UserController {
       return { verified: true, user, token };
     } catch (error) {}
   }
-  // user enters verfication code and wheenver it is mailed the mailed code should be updated in the mongodb atlas as well.
+
   static async autoLogin({ id, email, token }) {
     try {
       // Check if user with provided id, email, and token exists in the permanent DB
@@ -140,6 +164,31 @@ class UserController {
       return { email, codeSent: false };
     }
   }
+
+  static async resetPassword({input}) {
+  try {
+    console.log(input)
+    const {id, email, newPassword} = input;
+    
+    // Update user's password in the database with the new password
+    const user = await User.findOneAndUpdate(
+      { _id: id, email },
+      { password: newPassword }
+    );
+    if (user) {
+      // Password updated successfully
+      return { message: "Password updated successfully", success: true };
+    } else {
+      // User not found
+      return { message: "User not found", success: false };
+    }
+  } catch (error) {
+    console.error("Error during password reset:", error.message);
+    return { message: error.message, success: false };
+  }
+}
+
+  
 
   static async initializeDBs(user) {
     try {

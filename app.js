@@ -51,10 +51,14 @@ async function startServer() {
 
   // Middleware to log every request data
   app.use((req, res, next) => {
-    console.log(`Request received at ${new Date().toISOString()}`);
-    console.log(`Method: ${req.method}`);
-    console.log(`Path: ${req.path}`);
-    console.log(`Body: ${JSON.stringify(req.body)}`);
+    if (req.body && req.body.query && req.body.query.includes("IntrospectionQuery")) {
+      console.log("Introspect query received");
+    } else {
+      // console.log(`Request received at ${new Date().toISOString()}`);
+      // console.log(`Path: ${req.path}`);
+      console.log(`Method: ${req.method}`);
+      console.log(`Body: ${JSON.stringify(req.body)}`);
+    }
     next();
   });
 
