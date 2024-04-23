@@ -33,6 +33,17 @@ async function getTempUserFromDB(email) {
   }
 }
 
+async function updateTempUser(email, newData) {
+  try {
+    // Update the temporary user document with the provided email
+    await TempUser.updateOne({ email }, newData);
+    return true;
+  } catch (error) {
+    console.error("Error updating temporary user in DB:", error.message);
+    return false;
+  }
+}
+
 async function deleteTempUser(email) {
   try {
     await TempUser.deleteOne({ email });
@@ -43,8 +54,10 @@ async function deleteTempUser(email) {
   }
 }
 
+
 module.exports = {
   storeTempUserInDB,
   getTempUserFromDB,
   deleteTempUser,
+  updateTempUser
 };

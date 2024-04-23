@@ -10,10 +10,11 @@ const {
   getTempUserFromDB,
   storeTempUserInDB,
   deleteTempUser,
+  updateTempUser,
 } = require("../utils/createTempUser.js");
 const sendMail = require("../utils/sendMail.js");
 const { checkUser, checkUserLogin } = require("../utils/checkUser.js");
-const { Types} = require("mongoose");
+const { Types } = require("mongoose");
 
 class UserController {
   static async signup({
@@ -25,7 +26,6 @@ class UserController {
     deviceSize,
     userAgent,
   }) {
-    //todo: check that such email already exists or not
     const verificationCode = generateVerificationCode();
     const content = {
       subject: "SignUp in StudyBuddy",
@@ -34,23 +34,25 @@ class UserController {
 
     const codeMailed = await sendMail(email, content);
     if (codeMailed) {
-      const tempUser = {
-        name,
-        email,
-        password,
-        streakGoal,
-        timezone,
-        deviceSize,
-        userAgent,
-        verificationCode,
-      };
-      const tempUserStored = await storeTempUserInDB(tempUser);
+      const foundTempUser = await getTempUserFromDB(email);
 
-      if (tempUserStored) {
-        return { CodeMailed: true };
+      if (foundTempUser) {
+        await updateTempUser(email, { verificationCode });
       } else {
-        return { CodeMailed: false };
+        const tempUser = {
+          name,
+          email,
+          password,
+          streakGoal,
+          timezone,
+          deviceSize,
+          userAgent,
+          verificationCode,
+        };
+        await storeTempUserInDB(tempUser);
       }
+      
+      return { CodeMailed: true };
     } else {
       return { CodeMailed: false };
     }
@@ -68,7 +70,7 @@ class UserController {
       return { verified: true, user, token };
     } catch (error) {}
   }
-
+  // user enters verfication code and wheenver it is mailed the mailed code should be updated in the mongodb atlas as well.
   static async autoLogin({ id, email, token }) {
     try {
       // Check if user with provided id, email, and token exists in the permanent DB
@@ -187,7 +189,7 @@ class UserController {
     } catch (error) {
       console.error("Error initializing databases:", error);
       throw error;
-    } 
+    }
   }
 }
 
