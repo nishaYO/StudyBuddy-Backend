@@ -38,6 +38,11 @@ mongoose.connect(process.env.MONGO_URI, {
 app.use(cors());
 app.use(express.json());
 
+app.get('/checkr',(req,res)=>{
+  console.log(['5','5','5','5'].map(parseInt));
+  return res.status(200).json({message:"true"});
+})
+
 const mergedTypeDefs = mergeTypeDefs([userTypes, notesTypes, sessionTypes, reportsTypes, contactFormTypes]);
 const mergedResolvers = mergeResolvers([userResolvers, notesResolvers, sessionResolvers, reportsResolvers, contactFormResolvers]);
 
@@ -71,6 +76,7 @@ async function startServer() {
     console.log(
       `Server running at http://localhost:${PORT}${server.graphqlPath}`
     );
+    console.log((['5','5','5','5'].map(parseFloat)).map(parseInt));
   });
 }
 
