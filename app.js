@@ -3,6 +3,8 @@ const { ApolloServer } = require("apollo-server-express");
 const { mergeTypeDefs, mergeResolvers } = require("@graphql-tools/merge");
 const { config } = require("dotenv");
 const cors = require("cors");
+const User=require("./models/userModel.js");
+const createUser=require("./utils/createUser.js");
 
 const userResolvers = require("./resolvers/userResolvers.js");
 const notesResolvers = require("./resolvers/notesResolvers.js");
@@ -15,6 +17,9 @@ const sessionTypes = require("./types/sessionTypes.js");
 const reportsTypes = require("./types/reportsTypes.js");
 const contactFormTypes = require("./types/contactTypes.js");
 const mongoose = require('mongoose');
+
+const { OAuth2Client } = require('google-auth-library');
+const client = new OAuth2Client();
 
 // Load environment variables from .env file
 config();
@@ -67,6 +72,35 @@ async function startServer() {
     next();
   });
 
+  // API for Google Authentication
+app.post("/google-auth", async (req, res) => {
+  console.log("this route of google login gets hit");
+  const { credential, client_id } = req.body;
+  try {
+  const ticket = await client.verifyIdToken({
+  idToken: credential,
+  audience: client_id,
+  });
+  const payload = ticket.getPayload();
+  const userid = payload["sub"];
+  console.log("getting ticket",ticket);
+  console.log("getting payload",payload);
+  console.log("getting userid",userid);
+  // Check if the user exists in your database
+  let user=await User.findOne({email:"pranavgoogle@anymail.com"});
+  if(!user){
+    const { user, token } = await createUser();
+    return res.status(200).json({payload,user,token,userid})
+  }else {
+   return res.status(409).json({ message:"User already exists" });
+  }
+ 
+  } catch (err) {
+  console.log("getting error in backedn",err);
+  res.status(400).json({ err });
+  }
+  });
+
   // Apply the Apollo Server middleware to the "/graphql" path
   server.applyMiddleware({ app, path: "/graphql" });
 
@@ -76,7 +110,6 @@ async function startServer() {
     console.log(
       `Server running at http://localhost:${PORT}${server.graphqlPath}`
     );
-    console.log((['5','5','5','5'].map(parseFloat)).map(parseInt));
   });
 }
 

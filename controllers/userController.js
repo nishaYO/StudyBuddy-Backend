@@ -17,6 +17,9 @@ const sendMail = require("../utils/sendMail.js");
 const { checkUser, checkUserLogin } = require("../utils/checkUser.js");
 const { Types } = require("mongoose");
 
+const { OAuth2Client } = require("google-auth-library");
+const client = new OAuth2Client();
+
 class UserController {
   static async signup({
     name,
@@ -27,6 +30,16 @@ class UserController {
     deviceSize,
     userAgent,
   }) {
+    console.log(
+      "sinup user called on the go",
+      name,
+      email,
+      password,
+      streakGoal,
+      timezone,
+      deviceSize,
+      userAgent
+    );
     const verificationCode = generateVerificationCode();
     const content = {
       subject: "SignUp in StudyBuddy",
@@ -58,6 +71,49 @@ class UserController {
       return { CodeMailed: false };
     }
   }
+
+  static async googleSignIn(user) {
+    console.log("getting user data in google signin", user);
+    const { credential, client_id, timezone, streakGoal,deviceSize, userAgent } = user;
+    try {
+      const ticket = await client.verifyIdToken({
+        idToken: credential,
+        audience: client_id,
+      });
+      const payload = ticket.getPayload();
+      console.log("getting payload in main app backend", payload);
+      const { name, email,picture } = payload;
+      let user = await User.findOne({ email });
+      console.log("getting user", user);
+      if (!user) {
+        const userData = {
+          name,
+          email,
+          password:null,
+          authProvider:'google',
+          profilePicUrl:picture,
+          timezone,
+          streakGoal,
+          deviceSize,
+          userAgent,
+        };
+        const { user, token } = await createUser(userData);
+        this.initializeDBs(user);
+        return { loggedIn:true, user, token };
+      }else if(user && user.authProvider==="google"){
+        const token=user.token;
+        return { loggedIn:true,user,token}
+      }
+       else {
+        console.log("come here to retrun nothing");
+        return { loggedIn: false, message: "User already exists" };
+      }
+    } catch (err) {
+      console.log("getting error in backedn", err);
+      return { err };
+    }
+  }
+
 
   static async deleteUser({ userID }) {
     // Check if user exists
@@ -101,7 +157,9 @@ class UserController {
       const existingUser = await checkUser({ _id: id, email, token });
 
       if (existingUser) {
-        return { loggedIn: true };
+        const profilePicUrl=existingUser.profilePicUrl;
+        console.log("getting user in auto login",existingUser);
+        return { loggedIn: true,profilePicUrl };
       } else {
         return { loggedIn: false };
       }
@@ -115,6 +173,7 @@ class UserController {
     try {
       // Check if user with provided email and password exists in the permanent DB
       const existingUser = await checkUserLogin({ email, password });
+      console.log("getting existing user to cehck login",existingUser);
       if (existingUser) {
         const user = {
           id: existingUser._id,
@@ -124,6 +183,7 @@ class UserController {
         const token = existingUser.token;
         return { loggedIn: true, user, token };
       } else {
+        console.log("passord not matched called");
         return { loggedIn: false, user: null, token: null };
       }
     } catch (error) {
@@ -165,30 +225,28 @@ class UserController {
     }
   }
 
-  static async resetPassword({input}) {
-  try {
-    console.log(input)
-    const {id, email, newPassword} = input;
-    
-    // Update user's password in the database with the new password
-    const user = await User.findOneAndUpdate(
-      { _id: id, email },
-      { password: newPassword }
-    );
-    if (user) {
-      // Password updated successfully
-      return { message: "Password updated successfully", success: true };
-    } else {
-      // User not found
-      return { message: "User not found", success: false };
-    }
-  } catch (error) {
-    console.error("Error during password reset:", error.message);
-    return { message: error.message, success: false };
-  }
-}
+  static async resetPassword({ input }) {
+    try {
+      console.log(input);
+      const { id, email, newPassword } = input;
 
-  
+      // Update user's password in the database with the new password
+      const user = await User.findOneAndUpdate(
+        { _id: id, email },
+        { password: newPassword }
+      );
+      if (user) {
+        // Password updated successfully
+        return { message: "Password updated successfully", success: true };
+      } else {
+        // User not found
+        return { message: "User not found", success: false };
+      }
+    } catch (error) {
+      console.error("Error during password reset:", error.message);
+      return { message: error.message, success: false };
+    }
+  }
 
   static async initializeDBs(user) {
     try {

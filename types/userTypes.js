@@ -31,6 +31,23 @@ const userTypes = gql`
     code: String!
   }
 
+  input GoogleSignInInput {
+    client_id:String!
+    credential:String!
+    timezone:String!
+    streakGoal:String!
+    deviceSize:String!
+    userAgent:String!
+
+  }
+
+  type GoogleSignInOutput {
+    loggedIn: Boolean!
+    user: User
+    token: String
+    message:String
+  }
+
   type User {
     id: ID!
     name: String!
@@ -45,6 +62,7 @@ const userTypes = gql`
 
   type AuthResult {
     loggedIn: Boolean!
+    profilePicUrl:String
   }
 
   input AuthInput {
@@ -57,10 +75,17 @@ const userTypes = gql`
     email: String!
     codeSent: Boolean
   }
+
   type DeleteUserResult {
     success: Boolean!
     message: String
   }
+
+  type ResetPasswordOutput {
+    message: String!
+    success: Boolean!
+  }
+
   type Query {
     user(id: ID!): User
     autoLogin(input: AuthInput): AuthResult!
@@ -72,10 +97,6 @@ const userTypes = gql`
     id: ID!
   }
 
-  type ResetPasswordOutput {
-    message: String!
-    success: Boolean!
-  }
   type Mutation {
     signup(input: SignupInput): SignupOutput
     verifyEmail(input: VerifyEmailInput): VerifyEmailOutput
@@ -83,6 +104,7 @@ const userTypes = gql`
     forgotPassword(email: String!): ForgotPassword
     deleteUser(userID: ID!): DeleteUserResult!
     resetPassword(input: ResetPasswordInput!): ResetPasswordOutput
+    googleSignIn(input: GoogleSignInInput!): GoogleSignInOutput
   }
 `;
 

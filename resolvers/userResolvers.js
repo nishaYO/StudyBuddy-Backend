@@ -2,6 +2,7 @@ const UserController = require('../controllers/userController.js');
 
 const userResolvers = {
   Mutation: {
+    googleSignIn:(_, { input }) => UserController.googleSignIn(input),
     signup: (_, { input }) => UserController.signup(input),
     verifyEmail: (_, { input }) => UserController.verifyEmail(input),
     login: (_, { input }) => UserController.login(input),
