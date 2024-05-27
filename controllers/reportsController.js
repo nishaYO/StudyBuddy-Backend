@@ -48,8 +48,8 @@ class ReportsController {
           // Calculate study time percentage
           const user = await User.findOne({ _id: userID });
           const { hours, minutes } = JSON.parse(user.streakGoal);
-          const streakGoalHours = parseInt(hours);
-          const streakGoalMinutes = parseInt(minutes);
+          const streakGoalHours = parseFloat(hours);
+          const streakGoalMinutes = parseFloat(minutes);
           const streakGoal = streakGoalHours * 60 + streakGoalMinutes;
           const totalStudyTimeMinutes =
             streakCalendar.calendar[sessionIndex].studyTime.hours * 60 +
@@ -136,7 +136,7 @@ class ReportsController {
         // Update the latestSession and totalStudyDuration fields if endTime and totalSessionDuration are provided
         if (endTime && totalSessionDuration) {
           mainStatsDoc.latestSession = {
-            endTime: new Date(parseInt(endTime)),
+            endTime: new Date(parseFloat(endTime)),
             sessionDuration: totalSessionDuration,
           };
         }
@@ -171,8 +171,8 @@ class ReportsController {
       const user = await User.findOne({ _id: userID });
       console.log(user);
       const { hours, minutes } = JSON.parse(user.streakGoal);
-      const streakGoalHours = parseInt(hours);
-      const streakGoalMinutes = parseInt(minutes);
+      const streakGoalHours = parseFloat(hours);
+      const streakGoalMinutes = parseFloat(minutes);
       const streakGoal = streakGoalHours * 60 + streakGoalMinutes;
 
       // Fetch total study minutes for the user

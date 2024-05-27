@@ -70,7 +70,7 @@ class SessionController {
         userID: sessionDoc.userID,
       });
 
-      const endTimeStamp = parseInt(sessionDoc.endTime); // Parse the timestamp string to a number
+      const endTimeStamp = parseFloat(sessionDoc.endTime); // Parse the timestamp string to a number
       const endDate = new Date(endTimeStamp); // Create a Date object from the timestamp
 
       await fillMissingDates(sessionDoc.userID);
